@@ -1,5 +1,130 @@
-# Object file
+# GHDL Simulation Files
 *.o
+*.cf
+*.ghw
+*.vcd
+work/
+work-obj93.cf
+
+# VHDL Compilation
+*.lst
+*.exe
+*.out
+
+# Editor and IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Build Artifacts
+bin/
+obj/
+debug/
+release/
+*.a
+*.so
+*.dll
+
+# Temporary Files
+*.tmp
+*.temp
+temp/
+tmp/
+*.bak
+
+# OS-specific Files
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Simulation Traces and Logs
+*.log
+*.wlf
+*.wdb
+*.shm/
+*.shm
+
+# GTKWave Temporary Files
+*.gtkw~
+*.gtkw.bak
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# ModelSim/Questa Files
+transcript
+vsim.wlf
+modelsim.ini
+*.mpf
+
+# Xilinx/Vivado Files
+*.xpr
+*.runs/
+*.ip_user_files/
+*.sim/
+.Xil/
+*.jou
+
+# Quartus Files
+*.qws
+db/
+incremental_db/
+output_files/
+simulation/
+
+# Synopsys Files
+*.db
+*.lib
+*.ldb
+*.synplify
+
+# Cadence Files
+*.lib
+*.lef
+*.def
+
+# Generic Build Directories
+build/
+dist/
+generated/
+output/
+
+# LaTeX/Documentation
+*.pdf
+*.aux
+*.log
+*.out
+*.toc
+
+# Backup Files
+*.backup
+*.orig
+backup/
+
+# Lock Files
+Gemfile.lock
+package-lock.json
+yarn.lock
+
+# Environment Files
+.env
+.env.local
+.env.*.local
+
+# IDE Plugin Files
+.classpath
+.project
+.settings/
+*.iml
+.gradle/
 
 # Ada Library Information
 *.ali
