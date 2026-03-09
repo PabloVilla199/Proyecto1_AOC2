@@ -10,18 +10,18 @@ entity Exception_manager is
     Port ( 	clk : in  STD_LOGIC;
            	reset : in  STD_LOGIC;
            	IRQ	: 	in  STD_LOGIC; 
-           	Data_abort: in std_logic; --indica que el último acceso a memoria ha sido un error
-           	undef: in STD_LOGIC; --indica que el código de operación no pertenence a una instrucción conocida. En este procesador se usa sólo para depurar
-           	RTE_ID: in STD_LOGIC; -- indica que en ID hay una instrucción de retorno de Excepción válida
-           	RTE_EX: in STD_LOGIC; -- indica que en EX hay una instrucción de retorno de Excepción válida
-           	valid_I_ID: in STD_LOGIC; -- indica que la instrucción en ID es válida
-           	valid_I_EX: in STD_LOGIC; -- indica que la instrucción en EX es válida
-           	valid_I_MEM: in STD_LOGIC; -- indica que la instrucción en MEM es válida
+           	Data_abort: in std_logic; --indica que el ï¿½ltimo acceso a memoria ha sido un error
+           	undef: in STD_LOGIC; --indica que el cï¿½digo de operaciï¿½n no pertenence a una instrucciï¿½n conocida. En este procesador se usa sï¿½lo para depurar
+           	RTE_ID: in STD_LOGIC; -- indica que en ID hay una instrucciï¿½n de retorno de Excepciï¿½n vï¿½lida
+           	RTE_EX: in STD_LOGIC; -- indica que en EX hay una instrucciï¿½n de retorno de Excepciï¿½n vï¿½lida
+           	valid_I_ID: in STD_LOGIC; -- indica que la instrucciï¿½n en ID es vï¿½lida
+           	valid_I_EX: in STD_LOGIC; -- indica que la instrucciï¿½n en EX es vï¿½lida
+           	valid_I_MEM: in STD_LOGIC; -- indica que la instrucciï¿½n en MEM es vï¿½lida
            	stall_MIPS: in STD_LOGIC; -- indica que hay que detener todas las etapas del mips
            	PC_out: in std_logic_vector(31 downto 0);-- pc actual
            	PC_exception_EX: in std_logic_vector(31 downto 0); --PC de la Ins en EX
            	PC_exception_ID: in std_logic_vector(31 downto 0); --PC de la Ins en ID
-           	Exception_accepted: out STD_LOGIC; -- Informa que se va a ceptar un excepción en el ciclo actual
+           	Exception_accepted: out STD_LOGIC; -- Informa que se va a ceptar un excepciï¿½n en el ciclo actual
            	Exception_LR_output: out std_logic_vector(31 downto 0)
            	);         	
 end Exception_manager;
@@ -29,7 +29,7 @@ end Exception_manager;
 architecture Behavioral of Exception_manager is
 
 component reg is
-    generic (size: natural := 32);  -- por defecto son de 32 bits, pero se puede usar cualquier tamaño
+    generic (size: natural := 32);  -- por defecto son de 32 bits, pero se puede usar cualquier tamaï¿½o
 	Port ( Din : in  STD_LOGIC_VECTOR (size -1 downto 0);
            clk : in  STD_LOGIC;
 	   reset : in  STD_LOGIC;
@@ -37,57 +37,84 @@ component reg is
            Dout : out  STD_LOGIC_VECTOR (size -1 downto 0));
 end component;
 
--- Soporte Excepciones--
+-- ================================================================================
+-- DECLARACIï¿½N DE SEï¿½ALES INTERNAS
+-- ================================================================================
 	signal MIPS_status, status_input: std_logic_vector(1 downto 0);
 	signal Return_I : std_logic_vector(31 downto 0);
-	signal update_status, Exception_accepted_internal: std_logic;		
-	-- ****************************************************************************************************
-	-- Gestión de Excepciones: 
-	--		* IRQ: es una entrada del MIPs
-	--		* Data_abort: la genera el controlador de memoria cuando recibe una dirección no alienada, o fuera del rango de la memoria
-	--		* UNDEF: la genera la unidad de control cuando le llega una instrucción válida con un código de operación desconocido
-	-- ****************************************************************************************************
-	-------------------------------------------------------------------------------------------------------------------------------
-	-- Status_register	 
-	-- el registro tiene como entradas y salidas vectores de señales cuya longitud se indica en size. En este caso es un vector de tamaño 2
-	-- El bit más significativo permite deshabilitar (valor 1) o habilitar las excepciones (valor 0)
-	-- El bit menos significativo informa si estamos en modo Excepción o estamos en modo normal
+	signal update_status, Exception_accepted_internal: std_logic;
+	
+	-- Seï¿½ales de detecciÃ³n de cada tipo de excepciÃ³n (sin considerar habilitaciÃ³n ni stall)
+	signal exception_Data_abort : std_logic;  -- Error en acceso a memoria (MEM stage)
+	signal exception_UNDEF : std_logic;       -- InstrucciÃ³n invÃ¡lida (ID stage)
+	signal exception_IRQ : std_logic;         -- InterrupciÃ³n externa
+	
+	-- Seï¿½al para determinar cuÃ¡l excepciÃ³n tiene MAYOR prioridad
+	signal exception_with_priority : std_logic_vector(2 downto 0); -- "100"=Data_abort, "010"=UNDEF, "001"=IRQ
+	
+-- ================================================================================
+-- GESTIÃ“N DE EXCEPCIONES: ARQUITECTURA Y COMPORTAMIENTO
+-- ================================================================================
+	-- El sistema maneja 3 tipos de excepciones con decisiones de flush diferentes:
+	--
+	-- 1. Data_abort (PRIORIDAD MÃS ALTA):
+	--    - Ocurre en: Etapa MEM (acceso a memoria invÃ¡lido)
+	--    - AcciÃ³n: FLUSH TODO (incluyendo MEM)
+	--    - RazÃ³n: Si fallÃ³ el acceso a memoria, no tiene sentido continuar
+	--            la instrucciÃ³n ni las anteriores
+	--
+	-- 2. UNDEF (PRIORIDAD MEDIA):
+	--    - Ocurre en: Etapa ID (decodificaciÃ³n ingresa opcode invÃ¡lido)
+	--    - AcciÃ³n: FLUSH desde ID en adelante (Invalida EX, MEM, WB)
+	--    - RazÃ³n: Si el cÃ³digo de operaciÃ³n es invÃ¡lido, no se puede ejecutar.
+	--            TambiÃ©n invalida todas las instrucciones posteriores en pipeline
+	--
+	-- 3. IRQ (PRIORIDAD MENOR):
+	--    - Ocurre en: Externa (asincrÃ³nica)
+	--    - AcciÃ³n: FLUSH desde EX en adelante (deja que EX/MEM/WB terminen)
+	--    - RazÃ³n: Las instrucciones en estadios avanzados estÃ¡n cercanas a terminar,
+	--            es mÃ¡s eficiente dejar que completen que descartar su trabajo
+	--
+	-- REGISTRO DE ESTADO (MIPS_status[1:0]):
+	-- - Bit 1: "0"=excepciones habilitadas, "1"=excepciones deshabilitadas (en modo excepcional)
+	-- - Bit 0: "0"=modo normal, "1"=modo excepcional
+	-- - Valores: "00"=Normal, "11"=Modo excepcional con excepciones deshabilitadas
 Begin	
 	status_reg: reg generic map (size => 2)
 			port map (	Din => status_input, clk => clk, reset => reset, load => update_status, Dout => MIPS_status);
 	------------------------------------------------------------------------------------
-	-- Completar: falta la lógica que detecta cuándo se va a procesar una excepción: cuando se recibe una de las señales (IRQ, Data_abort y Undef) y las excepciones están habilitadas (MIPS_status(1)='0')
-	--SOL:  se actualiza el registro de estado si hay una excepción o una RTE a no ser que el MIPS esté parado
+	-- Completar: falta la lï¿½gica que detecta cuï¿½ndo se va a procesar una excepciï¿½n: cuando se recibe una de las seï¿½ales (IRQ, Data_abort y Undef) y las excepciones estï¿½n habilitadas (MIPS_status(1)='0')
+	--SOL:  se actualiza el registro de estado si hay una excepciï¿½n o una RTE a no ser que el MIPS estï¿½ parado
 	
-	update_status	<= Exception_accepted_internal or (RTE_ID AND not(stall_MIPS));
+	update_status	<= Exception_accepted_internal or (RTE_ID AND valid_I_ID AND not(stall_MIPS));
 	
-	-- Sol: se procesa una excepción si se recibe IRQ y las excepciones están habilitadas (MIPS_status(1)='0') y el procesador no está parado (stall_MIPS = '0')
-	Exception_accepted_internal <= '1' when (((IRQ = '1') or ((Data_abort = '1')and (valid_I_MEM = '1')) or (UNDEF = '1')) AND (MIPS_status(1)='0') AND (stall_MIPS = '0')) else '0';
+	-- Sol: se procesa una excepciï¿½n si se recibe IRQ y las excepciones estï¿½n habilitadas (MIPS_status(1)='0') y el procesador no estï¿½ parado (stall_MIPS = '0')
+	Exception_accepted_internal <= '1' when (((IRQ = '1') or ((Data_abort = '1')and (valid_I_MEM = '1')) or ((UNDEF = '1') and (valid_I_ID = '1'))) AND (MIPS_status(1)='0') AND (stall_MIPS = '0')) else '0';
 	Exception_accepted <= Exception_accepted_internal;
 	-- Fin completar;
 	------------------------------------------------------------------------------------
 				
 	-- multiplexor para elegir la entrada del registro de estado
-	-- En este procesador sólo hay dos opciones ya que al entrar en modo excepción se deshabilitan las excepciones:
-	-- 		* "11" al entrar en una IRQ (Excepciones deshabilitadas y modo Excepción)
+	-- En este procesador sï¿½lo hay dos opciones ya que al entrar en modo excepciï¿½n se deshabilitan las excepciones:
+	-- 		* "11" al entrar en una IRQ (Excepciones deshabilitadas y modo Excepciï¿½n)
 	--		* "00" en el resto de casos
-	-- Podría hacerse con un bit, pero usamos dos para permitir ampliaciones)
+	-- Podrï¿½a hacerse con un bit, pero usamos dos para permitir ampliaciones)
 	status_input	<= 	"11" when (Exception_accepted_internal = '1') else "00";							
 	
 	------------------------------------------------------------------------------------
-	-- Al procesar una excepción las instrucciones que están en Mem y WB continúan su ejecución. El resto se matan
-	-- Para retornar se debe eligir la siguiente instrucción válida. Para ello tenemos sus direcciones almacenadas en:
+	-- Al procesar una excepciï¿½n las instrucciones que estï¿½n en Mem y WB continï¿½an su ejecuciï¿½n. El resto se matan
+	-- Para retornar se debe eligir la siguiente instrucciï¿½n vï¿½lida. Para ello tenemos sus direcciones almacenadas en:
 	-- PC_exception_EX y PC_exception_ID, y sus bits de validez en valid_I_EX y valid_I_ID
-	-- Si no hay válidas se elige el valor del PC.
-	-- IMPORTANTE: Si la instrucción en la etapa EX es una RTE no debe elegirse, ya que es una instrucción que ya se ha ejecutado por completo (el retorno se hace en ID), y que ha
-	-- ha perdido la información que necesita. Es decir, su LR, porque si ha saltado otra excepción lo habrá borrado.
-	-- Para evitar corromper la ejecución añadimos la comprobación RTE_EX='0'
+	-- Si no hay vï¿½lidas se elige el valor del PC.
+	-- IMPORTANTE: Si la instrucciï¿½n en la etapa EX es una RTE no debe elegirse, ya que es una instrucciï¿½n que ya se ha ejecutado por completo (el retorno se hace en ID), y que ha
+	-- ha perdido la informaciï¿½n que necesita. Es decir, su LR, porque si ha saltado otra excepciï¿½n lo habrï¿½ borrado.
+	-- Para evitar corromper la ejecuciï¿½n aï¿½adimos la comprobaciï¿½n RTE_EX='0'
 	Return_I	<= 	PC_exception_EX when ((valid_I_EX = '1')AND(RTE_EX = '0')) else 	
 					PC_exception_ID when (valid_I_ID = '1') else
 					PC_out;		
 	------------------------------------------------------------------------------------	
-	-- Exception_LR: almacena la dirección a la que hay que retornar tras una excepción	 
-	-- Vamos a guardar la dirección seleccionada en el MUX de arriba
+	-- Exception_LR: almacena la direcciï¿½n a la que hay que retornar tras una excepciï¿½n	 
+	-- Vamos a guardar la direcciï¿½n seleccionada en el MUX de arriba
 	Exception_LR: reg generic map (size => 32)
 			port map (	Din => Return_I, clk => clk, reset => reset, load => Exception_accepted_internal, Dout => Exception_LR_output);
 			

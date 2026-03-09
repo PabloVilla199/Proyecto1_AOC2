@@ -397,7 +397,9 @@ begin
 	-- Interaction with exceptions:
 	-- If the whole processor is stopped we do not process the exception.
 	-- If we are stopped in ID, we do process it (we don't care about the instruction in ID, we will kill it).
-	load_pc <= '1';
+	-- When stall_ID or stall_MIPS is active, stop loading the PC (freeze the IF stage)
+
+	load_pc <= not(stall_ID or stall_MIPS);
 	
 	-- END COMPLETE;
 	------------------------------------------------------------------------------------
@@ -410,13 +412,22 @@ begin
 	-- Complete: eliminate the "--" to include the supported Exceptions, and complete the code with the correct conditions. See example for data abort.
 	-- This code is the input mux to the PC: it choose between PC+4, the jump address generated in ID, the address of the exception handling routine, or the return address of the exception.
 	-- The order assigns priority if two or more conditions are fulfilled.	
+
+	-- Tabla de prioridad de PC_in (de mayor a menor):
+	-- 1) Exception_accepted + Data_abort -> 0x00000008
+	-- 2) Exception_accepted + Undef      -> 0x0000000C
+	-- 3) Exception_accepted + IRQ        -> 0x00000004
+	-- 4) RTE_ID + valid_I_ID             -> Exception_LR_output
+	-- 5) ret_ID + valid_I_ID             -> BusA (direccion de retorno en Rs)
+	-- 6) salto_tomado                    -> Dirsalto_ID (BEQ/JAL)
+	-- 7) por defecto                     -> PC4
 	
 	PC_in <= 	x"00000008" 		when (Exception_accepted = '1') and (Data_abort = '1') else -- If a data abort arrives we jump to address 0x00000008.
-				--x"0000000C" 		when (Exception_accepted = '1') and (UNDEF = '1') else -- If an UNDEF arrives, we jump to address 0x0000000C.
-				--x"00000004" 		when (Exception_accepted = '1') and (IRQ = '1') else -- If an IRQ arrives, jump to address 0x00000004
-				--Exception_LR_output when RTE_ID = '1' else 	--@ retorno. If it is an RTE we revert to the @ we had stored in the Exception_LR			
-				-- Entrada para el RET, poned lo que toque: 				when RET_ID = '1' else 	--The address stored in the Rs register outgoing from port A of the BR is chosen.
-				Dirsalto_ID 		when salto_tomado = '1' else --@ Jump of the BEQ and JAL. The RTE and RET may also activate the "salto_tomado" signal, but  but due to the order of the sentence, RET or RTE will be chosen first			PC4; -- PC+4
+				x"0000000C" 		when (Exception_accepted = '1') and (Undef = '1') else -- If an UNDEF arrives, we jump to address 0x0000000C.
+				x"00000004" 		when (Exception_accepted = '1') and (IRQ = '1') else -- If an IRQ arrives, jump to address 0x00000004
+				Exception_LR_output when (RTE_ID = '1') and (valid_I_ID = '1') else 	--@ return from exception. If it is an RTE we revert to the @ we had stored in the Exception_LR			
+				BusA 				when (ret_ID = '1') and (valid_I_ID = '1') else 	--The address stored in the Rs register outgoing from port A of the BR is chosen for RET
+				Dirsalto_ID 		when salto_tomado = '1' else --@ Jump of the BEQ and JAL.
 				PC4; -- PC+4
 								
 	------------------------------------------------------------------------------------
@@ -436,10 +447,17 @@ begin
 	-- COMPLETE:
 	--			stall_ID stops the execution of the ID stage, but it should also stop the previous stage. YOU HAVE TO INCLUDE THE CODE THAT DO THAT
 	-- 			It should also stop when stall_MIPS is active
-	load_ID <= '1';
+	-- When stall_ID or stall_MIPS is active, do not load a new instruction into the ID bank (freeze ID and IF)
+	load_ID <= not(stall_ID or stall_MIPS);
 
-	Banco_IF_ID: Banco_ID port map (	IR_in => IR_in, PC4_in => PC4, clk => clk, reset => reset_ID, load => load_ID, IR_ID => IR_ID, PC4_ID => PC4_ID, 
-										--Nuevo
+	Banco_IF_ID: Banco_ID port map (	IR_in => IR_in,
+										PC4_in => PC4, 
+										clk => clk, 
+										reset => reset_ID, 
+										load => load_ID, 
+										IR_ID => IR_ID, 
+										PC4_ID => PC4_ID, 
+
 										valid_I_IF => valid_I_IF, valid_I_ID => valid_I_ID,  
 										PC_exception => PC_out, PC_exception_ID => PC_exception_ID); 
 	--
@@ -480,7 +498,7 @@ begin
 	
 	------------------------------------------------------------------------------------							
 	-- Salto tomado must be triggered whenever the instruction in D produces a jump in execution.
-	-- This includes jumps taken in the BEQs (Z AND Branch_ID), jal, ret and RTE.
+	-- This includes jumps taken in the BEQs (Z AND Branch_ID), jal, ret, and rte.
 	-- IMPORTANT: if the instruction is not valid, it is not jumped.
 	salto_tomado <= ((Z AND Branch_ID) or RTE_ID or jal_ID or ret_ID);
 								
@@ -517,7 +535,8 @@ begin
 	reset_EX <= (reset or Exception_accepted);
 	-- ID/EX Bank 
 	-- COMPLETE: If parar_MIPS is enabled, stop execution, and keep each instruction at its current stage.
-	load_EX <= '1';
+	-- When stall_MIPS is active, do not load new data into EX (freeze all stages from EX onward)
+	load_EX <= not(stall_MIPS);
 	Banco_ID_EX: Banco_EX PORT MAP ( 	clk => clk, reset => reset_EX, load => load_EX, busA => busA, busB => busB, busA_EX => busA_EX, busB_EX => busB_EX,
 						RegDst_ID => RegDst_ID, ALUSrc_ID => ALUSrc_ID, MemWrite_ID => MemWrite_ID, MemRead_ID => MemRead_ID,
 						MemtoReg_ID => MemtoReg_ID, RegWrite_ID => RegWrite_ID, RegDst_EX => RegDst_EX, ALUSrc_EX => ALUSrc_EX,
@@ -567,7 +586,8 @@ begin
 	valid_I_MEM_in <= valid_I_EX and not(Exception_accepted);
 	-- New: if stopped at EX, no new instruction must be loaded into the MEM etap.
 	-- COMPLETE: If para_MIPS is enabled, stop execution, and keep each instruction in its current stage.
-	load_MEM <= '1';
+	-- When stall_MIPS is active, do not load new data into MEM (freeze all stages from MEM onward)
+	load_MEM <= not(stall_MIPS);
 	Banco_EX_MEM: Banco_MEM PORT MAP ( 	ALU_out_EX => ALU_out_EX, ALU_out_MEM => ALU_out_MEM, clk => clk, reset => reset_MEM, load => load_MEM, MemWrite_EX => MemWrite_EX,
 										MemRead_EX => MemRead_EX, MemtoReg_EX => MemtoReg_EX, RegWrite_EX => RegWrite_EX, MemWrite_MEM => MemWrite_MEM, MemRead_MEM => MemRead_MEM,
 										MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM, 
@@ -605,7 +625,8 @@ begin
 	    	
 	--Nuevo: si paramos en EX no hay que cargar una instrucción nueva en la etap MEM
 	-- COMPLETE: If para_MIPS is enabled, stop execution, and keep each instruction at its current stage.
-	load_WB <= '1';
+	-- When stall_MIPS is active, do not load new data into WB (freeze WB)
+	load_WB <= not(stall_MIPS);
 	
 	Banco_MEM_WB: Banco_WB PORT MAP ( 	ALU_out_MEM => ALU_out_MEM, ALU_out_WB => ALU_out_WB, Mem_out => Mem_out, MDR => MDR, clk => clk, reset => reset, load => load_WB, 
 										MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM, MemtoReg_WB => MemtoReg_WB, RegWrite_WB => RegWrite_WB, 
@@ -621,7 +642,16 @@ begin
 	-- Initially only two inputs are used, and the other two are disconnected, but they can be used for the new instructions.	
 	-- To do this, the necessary connections must be made, and the control signal of the multiplexer must be set.	
 	-- Complete with your solution for JAL
-	ctrl_Mux4a1_escritura_BR <= '0'&MemtoReg_WB	;
+	-- If JAL_WB, select PC4_WB (input 10). Otherwise, use MemtoReg_WB to select between ALU and MDR
+
+	-- Tabla de seleccion de ctrl_Mux4a1_escritura_BR:
+	-- 00 -> ALU_out_WB  (aritmetica)
+	-- 01 -> MDR         (LW)
+	-- 10 -> PC4_WB      (JAL)
+	-- 11 -> libre 
+	
+	ctrl_Mux4a1_escritura_BR <= 	"10" when (JAL_WB = '1') else
+									'0'&MemtoReg_WB;
 	mux_busW: mux4_1 port map (Din0 => ALU_out_WB, DIn1 => MDR, DIn2 => PC4_WB, DIn3 => PC4_WB, ctrl => ctrl_Mux4a1_escritura_BR, Dout => busW);
 	
 

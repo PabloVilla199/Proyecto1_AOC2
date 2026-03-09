@@ -63,7 +63,15 @@ begin
 
 UC_mux : process (IR_op_code, valid_I_ID)
 begin 
-	-- By default we set all signals to 0 which is the value that guarantees that we do not alter anything.
+	--  instrucciones JAL, RET y RTE.
+	-- Tabla de control para las nuevas instrucciones:
+	-- +------+--------+--------+--------+--------+----------+---------+----------+----------+-----+-----+-----+
+	-- | Inst | Opcode | Branch | RegDst | ALUSrc | MemWrite | MemRead | MemtoReg | RegWrite | jal | ret | RTE |
+	-- +------+--------+--------+--------+--------+----------+---------+----------+----------+-----+-----+-----+
+	-- | JAL  | 000101 |   0    |   1    |   0    |    0     |    0    |    1     |    1     |  1  |  0  |  0  |
+	-- | RET  | 000110 |   0    |   0    |   0    |    0     |    0    |    0     |    0     |  0  |  1  |  0  |
+	-- | RTE  | 001000 |   0    |   0    |   0    |    0     |    0    |    0     |    0     |  0  |  0  |  1  |
+	-- +------+--------+--------+--------+--------+----------+---------+----------+----------+-----+-----+-----+
 	Branch <= '0'; RegDst <= '0'; ALUSrc <= '0'; MemWrite <= '0'; MemRead <= '0'; MemtoReg <= '0'; RegWrite <= '0'; UNDEF <= '0';
 	jal <= '0'; ret <= '0'; RTE <= '0'; 
 	IF valid_I_ID = '1' then --if the instruction is valid we analyse its operation code
@@ -81,12 +89,12 @@ begin
 			------------------------------------------------
 			-- COMPLETE
 			------------------------------------------------
-			-- JAL
-			WHEN  jal_opcode  	=>  jal <= '1';  -- Any more signals?
-			-- RET
-			WHEN  RET_opcode  	=>  ret <= '1'; -- Any more signals?
-			--RTE
-			WHEN  RTE_opcode  	=>  RTE <= '1'; -- Any more signals?
+			-- JAL: salto con enlace (la escritura de PC4 se decide despues en WB)
+			WHEN  jal_opcode  	=>  jal <= '1'; RegWrite <= '1'; MemtoReg <= '1'; RegDst <= '1';
+			-- RET: salto a la direccion contenida en Rs (no escribe en BR)
+			WHEN  RET_opcode  	=>  ret <= '1';
+			-- RTE: retorno de excepcion usando Exception_LR (no escribe en BR)
+			WHEN  RTE_opcode  	=>  RTE <= '1';
 			-- OP code undefined
 			WHEN  OTHERS 	  	=> UNDEF <= '1';
 		  END CASE;
