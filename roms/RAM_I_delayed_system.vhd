@@ -31,35 +31,50 @@ entity memoriaRAM_I is port (
 		  	Dout : out std_logic_vector (31 downto 0));
 end memoriaRAM_I;
 
---------------------------------------------------------------------------------------------------------------------------------
--- TEST RET (Return from subroutine)
--- 
--- Comportamiento esperado:
--- 1. Carga manualmente dirección de retorno en R31 (simulando lo que haría JAL)
--- 2. Escribe valores conocidos en R1, R2
--- 3. Salta manualmente a subrutina usando BEQ incondicional
--- 4. En subrutina: hace operación y escribe resultado
--- 5. RET usa R31 para volver a MAIN
--- 6. MAIN continúa y escribe marcador final
--- 
--- Verificar en simulación:
---    - PC debe retornar a dirección almacenada en R31 (0x28 = word 10)
---    - MEM[0] contiene resultado de subrutina (8 = 5+3)
---    - MEM[4] contiene marcador de retorno exitoso (0xDEAD)
---------------------------------------------------------------------------------------------------------------------------------
+--************************************************************************************************************
+-- Instruction memory file loaded with various tests.
+-- IMPORTANT: There can only be one uncommented test. 
+-- To run a test, uncomment it, and comment on the rest.
+--************************************************************************************************************
 
 architecture Behavioral of memoriaRAM_I is
 type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
+--------------------------------------------------------------------------------------------------------------------------------
+-- Instruction Memory Map
+-- From Word 0 to 3: Exception Vector Table: (@ of the exception routines)
+-- 		@0: reset
+-- 		@4: IRQ
+-- 		@8: Data Abort
+-- 		@C: UNDEF
+-- From Word 4  (@010): .CODE (code of the application to execute)
+-- From Word 64 (@100): RTI (code for the IRQ)
+-- From Word 96 (@180): Data abort (code for the Data Abort exception)
+-- From Word 112(@1C0): UNDEF (code for the UNDEF exception)
+--------------------------------------------------------------------------------------------------------------------------------
 
-signal RAM : RamType := (  			X"10210003", X"00000000", X"00000000", X"00000000", X"101F0028", X"10210005", X"10220003", X"10210038", --word 0,1,...
-									X"00000000", X"00000000", X"1081DEAD", X"0C010004", X"1000FFFF", X"00000000", X"00000000", X"00000000", --word 8,9,...
+
+--------------------------------------------------------------------------------------------------------------------------------
+-- TESTBENCH 1: Delayed SYSTEM 
+-- Delayed_code including nops to eliminate data and control hazards. 
+-- It loops infinitely in case of IRQ, undef, or abort exceptions.
+-- Code overview: MEM[0]= MEM[0] + MEM[4]; while(1);//MEM[0]=256+1
+-- Reset: beq R1, R1, INI; 
+-- Ini: LW  R31, 0(R0); 
+-- Main: LW  R1, 0(R0); LW  R2, 4(R0); NOP; NOP; ADD R3, R1, R2; NOP; NOP; SW  R3, 0(R0); end: beq r0, r0, end; NOP
+-- It should work on the initial processor. 
+-- NEXT STEPS: 
+-- 1) After designing the hazard-detection and fordwarding units, remove the unnecessary nops and check that it still works.
+-- 2) Replace the 4 instructions in the loop with a lw_inc and check that you get the same result. 
+--------------------------------------------------------------------------------------------------------------------------------
+signal RAM : RamType := (  			X"10210003", X"00000000", X"00000000", X"00000000", X"081F0000", X"08010000", X"08020004", X"00000000", --word 0,1,...
+									X"00000000", X"04221800", X"00000000", X"00000000", X"0C030000", X"1000FFFF", X"00000000", X"00000000", --word 8,9,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 16,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 24,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 32,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 40,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 48,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 56,...
-									X"04231000", X"0C030000", X"17E00000", X"10210BAD", X"1000FFFF", X"00000000", X"00000000", X"00000000", --word 64,...
+									X"1000FFFF", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 64,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000",--word 72,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 80,...
 									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 88,...
