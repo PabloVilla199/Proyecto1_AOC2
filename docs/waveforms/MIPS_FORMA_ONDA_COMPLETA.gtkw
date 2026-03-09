@@ -1,22 +1,25 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] MIPS Segmentado - Forma de Onda Organizada por Etapas
+[*] MIPS Segmentado - Forma de Onda Organizada por Etapas (con OPCODE)
 [*] AOC2 - Lab P1
 [*]
 [dumpfile] "/mnt/c/Users/Pablo/Desktop/2025-2026/Segundo Cuatrimestre/AOC2/Proyectos/P1/Moodle_2026_sources/Moodle_2026_sources/testbench/mips_wave.ghw"
-[savefile] "/mnt/c/Users/Pablo/Desktop/2025-2026/Segundo Cuatrimestre/AOC2/Proyectos/P1/Moodle_2026_sources/Moodle_2026_sources/testbench/MIPS_FORMA_ONDA_COMPLETA.gtkw"
+[savefile] "/mnt/c/Users/Pablo/Desktop/2025-2026/Segundo Cuatrimestre/AOC2/Proyectos/P1/Moodle_2026_sources/Moodle_2026_sources/testbench/MIPS_FORMA_ONDA_COMPLETA_OPCODE.gtkw"
 [timestart] 0
 [size] 1000 600
 [pos] 154 11
 *-20.0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+
 [treeopen] top.
 [treeopen] top.testbench.
 [treeopen] top.testbench.uut.
 [treeopen] top.testbench.uut.mips_core.
+
 [sst_width] 276
 [signals_width] 78
 [sst_expanded] 1
 [sst_vpaned_height] 157
+
 @200
 -==================== CONTROL GLOBAL ====================
 @28
@@ -24,6 +27,8 @@ top.testbench.clk
 top.testbench.reset
 @200
 -
+
+@200
 -==================== CONTROL DE RIESGOS GLOBAL ====================
 @28
 top.testbench.uut.mips_core.stall_id
@@ -32,6 +37,8 @@ top.testbench.uut.mips_core.salto_tomado
 top.testbench.uut.mips_core.alu_ready
 @200
 -
+
+@200
 -==================== BITS DE VALIDEZ (GLOBAL) ====================
 @28
 top.testbench.uut.mips_core.valid_i_if
@@ -41,19 +48,24 @@ top.testbench.uut.mips_core.valid_i_mem
 top.testbench.uut.mips_core.valid_i_wb
 @200
 -
+
+@200
 -========================================================================
 -======================== ETAPA IF (Instruction Fetch) ================
 -========================================================================
+
 -- Validez IF --
 @28
 top.testbench.uut.mips_core.valid_i_if
 @200
 -
+
 -- Señales de control IF --
 @28
 top.testbench.uut.mips_core.salto_tomado
 @200
 -
+
 -- PC y fetch --
 @22
 top.testbench.uut.mips_core.pc_in[31:0]
@@ -63,26 +75,56 @@ top.testbench.uut.mips_core.ir_in[31:0]
 top.testbench.uut.mips_core.dirsalto_id[31:0]
 @200
 -
+
+-- IR IF (campos para debug) --
+@28
+top.testbench.uut.mips_core.ir_in[31:26]    ; opcode
+@22
+top.testbench.uut.mips_core.ir_in[25:21]    ; rs
+top.testbench.uut.mips_core.ir_in[20:16]    ; rt
+top.testbench.uut.mips_core.ir_in[15:11]    ; rd
+top.testbench.uut.mips_core.ir_in[15:0]     ; imm
+top.testbench.uut.mips_core.ir_in[25:0]     ; target (jal)
+@200
+-
+
+@200
 -========================================================================
 -======================== ETAPA ID (Instruction Decode) ===============
 -========================================================================
+
 -- Validez ID --
 @28
 top.testbench.uut.mips_core.valid_i_id
 @200
 -
+
 -- Instrucción / PC ID --
 @22
 top.testbench.uut.mips_core.ir_id[31:0]
 top.testbench.uut.mips_core.pc4_id[31:0]
 @200
 -
--- Registros ID --
+
+-- IR ID (campos para debug) --
+@28
+top.testbench.uut.mips_core.ir_id[31:26]    ; opcode
+@22
+top.testbench.uut.mips_core.ir_id[25:21]    ; rs
+top.testbench.uut.mips_core.ir_id[20:16]    ; rt
+top.testbench.uut.mips_core.ir_id[15:11]    ; rd
+top.testbench.uut.mips_core.ir_id[15:0]     ; imm
+top.testbench.uut.mips_core.ir_id[25:0]     ; target (jal)
+@200
+-
+
+-- Registros ID (los tuyos) --
 @22
 top.testbench.uut.mips_core.reg_rs_id[4:0]
 top.testbench.uut.mips_core.reg_rt_id[4:0]
 @200
 -
+
 -- Datos ID --
 @22
 top.testbench.uut.mips_core.busa[31:0]
@@ -90,6 +132,7 @@ top.testbench.uut.mips_core.busb[31:0]
 top.testbench.uut.mips_core.inm_ext[31:0]
 @200
 -
+
 -- Control ID --
 @28
 top.testbench.uut.mips_core.aluctrl_id[2:0]
@@ -102,6 +145,7 @@ top.testbench.uut.mips_core.regwrite_id
 top.testbench.uut.mips_core.branch_id
 @200
 -
+
 -- Riesgos/Excepciones ID --
 @28
 top.testbench.uut.mips_core.load_id
@@ -110,19 +154,24 @@ top.testbench.uut.mips_core.rte_id
 top.testbench.uut.mips_core.pc_exception_id[31:0]
 @200
 -
+
+@200
 -========================================================================
 -======================== ETAPA EX (Execute) ==========================
 -========================================================================
+
 -- Validez EX --
 @28
 top.testbench.uut.mips_core.valid_i_ex
 @200
 -
+
 -- PC EX --
 @22
 top.testbench.uut.mips_core.pc4_ex[31:0]
 @200
 -
+
 -- Registros EX --
 @22
 top.testbench.uut.mips_core.reg_rs_ex[4:0]
@@ -131,6 +180,7 @@ top.testbench.uut.mips_core.reg_rd_ex[4:0]
 top.testbench.uut.mips_core.rw_ex[4:0]
 @200
 -
+
 -- Datos EX (pipeline ID/EX) --
 @22
 top.testbench.uut.mips_core.busa_ex[31:0]
@@ -138,6 +188,7 @@ top.testbench.uut.mips_core.busb_ex[31:0]
 top.testbench.uut.mips_core.inm_ext_ex[31:0]
 @200
 -
+
 -- Forwarding EX (operandos reales) --
 @28
 top.testbench.uut.mips_core.mux_ctrl_a[1:0]
@@ -147,6 +198,7 @@ top.testbench.uut.mips_core.mux_a_out[31:0]
 top.testbench.uut.mips_core.alu_src_out[31:0]
 @200
 -
+
 -- ALU EX --
 @28
 top.testbench.uut.mips_core.aluctrl_ex[2:0]
@@ -154,6 +206,7 @@ top.testbench.uut.mips_core.aluctrl_ex[2:0]
 top.testbench.uut.mips_core.alu_out_ex[31:0]
 @200
 -
+
 -- Control EX --
 @28
 top.testbench.uut.mips_core.alusrc_ex
@@ -164,6 +217,7 @@ top.testbench.uut.mips_core.memread_ex
 top.testbench.uut.mips_core.memtoreg_ex
 @200
 -
+
 -- Riesgos/Excepciones EX --
 @28
 top.testbench.uut.mips_core.load_ex
@@ -172,24 +226,30 @@ top.testbench.uut.mips_core.rte_ex
 top.testbench.uut.mips_core.pc_exception_ex[31:0]
 @200
 -
+
+@200
 -========================================================================
 -======================== ETAPA MEM (Memory Access) ===================
 -========================================================================
+
 -- Validez MEM --
 @28
 top.testbench.uut.mips_core.valid_i_mem
 @200
 -
+
 -- PC MEM --
 @22
 top.testbench.uut.mips_core.pc4_mem[31:0]
 @200
 -
+
 -- Registros MEM --
 @22
 top.testbench.uut.mips_core.rw_mem[4:0]
 @200
 -
+
 -- Datos MEM --
 @22
 top.testbench.uut.mips_core.alu_out_mem[31:0]
@@ -197,6 +257,7 @@ top.testbench.uut.mips_core.busb_mem[31:0]
 top.testbench.uut.mips_core.mem_out[31:0]
 @200
 -
+
 -- Control MEM --
 @28
 top.testbench.uut.mips_core.memwrite_mem
@@ -205,41 +266,51 @@ top.testbench.uut.mips_core.memtoreg_mem
 top.testbench.uut.mips_core.regwrite_mem
 @200
 -
+
 -- Riesgos MEM --
 @28
 top.testbench.uut.mips_core.load_mem
 @200
 -
+
+@200
 -========================================================================
 -======================== ETAPA WB (Write Back) =======================
 -========================================================================
+
 -- Validez WB --
 @28
 top.testbench.uut.mips_core.valid_i_wb
 @200
 -
+
 -- PC WB --
 @22
 top.testbench.uut.mips_core.pc4_wb[31:0]
 @200
 -
+
 -- Registro destino y dato WB --
 @22
 top.testbench.uut.mips_core.rw_wb[4:0]
 top.testbench.uut.mips_core.busw[31:0]
 @200
 -
+
 -- Control WB --
 @28
 top.testbench.uut.mips_core.regwrite_wb
 top.testbench.uut.mips_core.memtoreg_wb
 @200
 -
+
 -- Riesgos WB --
 @28
 top.testbench.uut.mips_core.load_wb
 @200
 -
+
+@200
 -========================================================================
 -==================== EXCEPCIONES E INTERRUPCIONES ====================
 -========================================================================
@@ -254,10 +325,13 @@ top.testbench.uut.mips_core.mips_status[1:0]
 top.testbench.uut.mips_core.exception_lr_output[31:0]
 @200
 -
+
+@200
 -========================================================================
 -======================== SALIDA I/O ==================================
 -========================================================================
 @22
 top.testbench.io_output[31:0]
+
 [pattern_trace] 1
 [pattern_trace] 0

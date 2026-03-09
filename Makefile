@@ -6,9 +6,11 @@
 VHDL_FILES := $(wildcard src/*.vhd)
 WORK_DIR := work
 GHDL := ghdl
+GHDL_FLAGS := --ieee=synopsys -fexplicit -fsynopsys
 ROOT_DIR := $(shell pwd)
 WAVE_FILE := testbench/mips_wave.ghw
 GTKW_FILE := testbench/MIPS_FORMA_ONDA_COMPLETA.gtkw
+TB_ENTITY := testbench
 
 help:
 	@echo "╔════════════════════════════════════════════╗"
@@ -40,7 +42,7 @@ run: analyze elaborate simulate view
 simulate: analyze elaborate
 	@echo ""
 	@echo "5. Ejecutando simulación..."
-	$(GHDL) -r testbench_AOC2_SoC_2026 --ieee=synopsys -fexplicit --ghw=$(WAVE_FILE) --stop-time=5000ns 2>&1
+	$(GHDL) -r $(GHDL_FLAGS) $(TB_ENTITY) --wave=$(WAVE_FILE) --stop-time=5000ns 2>&1
 	@echo "✓ Simulación completada: $(WAVE_FILE)"
 
 # Analizar archivos VHDL
@@ -50,14 +52,15 @@ analyze:
 		echo "ERROR: No se encontraron archivos .vhd"; \
 		exit 1; \
 	fi
-	$(GHDL) -i --ieee=synopsys -fexplicit $(VHDL_FILES) 2>&1
+	@$(GHDL) --clean >/dev/null 2>&1 || true
+	$(GHDL) -a $(GHDL_FLAGS) $(VHDL_FILES) 2>&1
 	@echo "✓ Analisis completado"
 
 # Elaborar (compilar)
 elaborate: analyze
 	@echo ""
 	@echo "4. Elaborando testbench..."
-	$(GHDL) -m --ieee=synopsys -fexplicit testbench_AOC2_SoC_2026 2>&1
+	$(GHDL) -m $(GHDL_FLAGS) $(TB_ENTITY) 2>&1
 	@echo "✓ Elaboración completada"
 
 # Ver waveform en GTKWave
@@ -84,8 +87,8 @@ view:
 # Limpiar archivos compilados
 clean:
 	@echo "Limpiando archivos temporales..."
-	@$(GHDL) clean --ieee=synopsys > /dev/null 2>&1 || true
-	@rm -f work-obj93.cf testbench_AOC2_SoC_2026 testbench_AOC2_SoC_2026.exe
+	@$(GHDL) --clean > /dev/null 2>&1 || true
+	@rm -f work-obj93.cf
 	@rm -f $(WAVE_FILE)
 	@echo "✓ Limpieza completada"
 
