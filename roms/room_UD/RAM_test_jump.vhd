@@ -26,30 +26,31 @@ end memoriaRAM_I;
 architecture Behavioral of memoriaRAM_I is
     type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
 
--- ROM de Prueba: Riesgo Load-Use Real
--- 1. LW R1, 0(R0)    -> Escribe en R1. Opcode: 0x08000801 (RT=1)
--- 2. ADD R2, R1, R1  -> Lee de R1. Opcode: 0x04211000
--- 3. ADD R3, R2, R2  -> Para rellenar
 ----------------------------------------------------------------------------------
-
-signal RAM : RamType := (           
-
-    -- Word 0-3: Tabla de Vectores de Excepción
-    X"10210003", -- @0: Reset (Salta a Word 4/0x10)
-    X"1000FFFF", -- @4: IRQ (Bucle infinito)
-    X"1000FFFF", -- @8: Data Abort (Bucle infinito)
-    X"1000FFFF", -- @C: UNDEF (Bucle infinito)
+    -- ROM DE PRUEBA: STRESS TEST DE UD (Stalls + Kill_IF)
+    ----------------------------------------------------------------------------------
+    -- 0x00 (0): ADD R1, R0, R0   -> R1 = 0. Productor en EX/MEM.
+    -- 0x04 (1): BEQ R1, R0, 2    -> Salta a 0x10. Causa STALL por R1 y luego KILL_IF.
+    -- 0x08 (2): ADD R2, R1, R1   -> DEBE SER ELIMINADA (Burbuja por Kill_IF).
+    -- 0x0C (3): NOP              -> Relleno.
+    -- 0x10 (4): JAL 0x18         -> Salta a 0x18. Escribe R31 y causa KILL_IF.
+    -- 0x14 (5): ADD R3, R1, R1   -> DEBE SER ELIMINADA (Burbuja por Kill_IF).
+    -- 0x18 (6): RET              -> Salta a R31. Causa STALL por R31 y KILL_IF.
+    -- 0x1C (7): BEQ R0, R0, -1   -> Bucle infinito final.
+    ----------------------------------------------------------------------------------
     
-    -- .CODE (Empieza en Word 4 / 0x10)
-    X"081F0000", -- @10: LW R31, 0(R0)  <- El que me has pedido
-    X"08010004", -- @14: LW R1, 4(R0)   <- Carga en R1
-    X"043F1000", -- @18: ADD R2, R31, R1 <- ¡CONFLICTO! Usa R31 y R1 inmediatamente
+    signal RAM : RamType := (           
+        X"04000800", -- 0x00: ADD R1, R0, R0
+        X"10200002", -- 0x04: BEQ R1, R0, 2 (Offset 2 -> 0x04 + 4 + 8 = 0x10)
+        X"04211000", -- 0x08: ADD R2, R1, R1 (KILLEADA)
+        X"00000000", -- 0x0C: NOP
+        X"14000001", -- 0x10: JAL 0x18 (Destino 0x18)
+        X"04211800", -- 0x14: ADD R3, R1, R1 (KILLEADA)
+        X"18000000", -- 0x18: RET (Usa R31)
+        X"1000FFFF", -- 0x1C: BEQ R0, R0, -1 (Bucle final)
+        others => X"00000000"
+    );
     
-    X"0C030000", -- @1C: SW R3, 0(R0)
-    X"1000FFFF", -- @20: Bucle final
-    
-    others => X"00000000"
-);
     signal dir_7:  std_logic_vector(6 downto 0); 
 
 begin

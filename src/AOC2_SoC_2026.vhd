@@ -1,5 +1,12 @@
--- TestBench Template 
-
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    09:59:08 03/17/2020 
+-- Design Name: 
+-- Module Name:    AOC2_SoC - Behavioral 
+--
+----------------------------------------------------------------------------------
   LIBRARY ieee;
   USE ieee.std_logic_1164.ALL;
   USE ieee.numeric_std.ALL;
@@ -30,7 +37,7 @@ END AOC2_SoC;
 	  	IO_MEM_ready: in std_logic; -- Nos avisa de si el subsistema de IO/MD va a realizar en este ciclo la orden del MIPS
 	  	-- Exceptions
 	  	IRQ	: 	in  STD_LOGIC; 
-	  	Data_abort: in std_logic --indica que el último acceso a memoria ha sido un error
+	  	Data_abort: in std_logic --indica que el ultimo acceso a memoria ha sido un error
 		  	);
 	end COMPONENT;
  -- Memory and Input/Output elements	
@@ -43,9 +50,9 @@ END AOC2_SoC;
 		  WE : in std_logic;		-- write enable	del MIPS
 		  RE : in std_logic;		-- read enable del MIPS			  
 		  -- New: fetch_inc signal
-		  IO_MEM_ready: out std_logic; -- indica si puede hacer la operación solicitada en el ciclo actual
-		  Data_abort: out std_logic; --indica que el último acceso a memoria ha sido un error
-		  Dout : out std_logic_vector (31 downto 0); --dato que se envía al Mips
+		  IO_MEM_ready: out std_logic; -- indica si puede hacer la operacion solicitada en el ciclo actual
+		  Data_abort: out std_logic; --indica que el ultimo acceso a memoria ha sido un error
+		  Dout : out std_logic_vector (31 downto 0); --dato que se envia al Mips
 		  -- SoC Input/Output ports
 		  Ext_IRQ	: 	in  STD_LOGIC;   --External interrupt signal
 		  MIPS_IRQ	: 	out  STD_LOGIC;  -- IRQ signal for the MIPS core. It may combine several IRQ signals from different sources 
@@ -71,4 +78,4 @@ END AOC2_SoC;
 										
 										
            	
-  END;
+  END behavior;
