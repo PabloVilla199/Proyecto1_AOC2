@@ -26,21 +26,7 @@ entity UD is
 end UD;
 
 architecture Behavioral of UD is
--- Ejemplos de Control de Riesgos y Paradas (Pipeline MIPS)
--- ---------------------------------------------------------------------------------------------------------------------------
--- | Caso | Instrucción en ID | Instrucción en EX/MEM | Condición de Riesgo             | Señales activadas       | Acción / Efecto (`stall_ID`)            |
--- |------|-------------------|-----------------------|---------------------------------|-------------------------|-----------------------------------------|
--- | 1    | BEQ               | Escribe registro      | dep_rs_*=1 o dep_rt_*=1         | BEQ_rs=1 y/o BEQ_rt=1   | PARADA: Hasta que el dato llegue a WB   |
--- | 2    | Lee registro      | LW (en EX)            | dep_rs/rt_EX=1 y MemRead_EX=1   | ld_uso_rs/rt = 1        | PARADA: 1 ciclo de reloj (carga-uso)    |
--- | 3    | Lee registro      | JAL (en EX o MEM)     | dep_rs/rt_*=1 y JAL_*=1         | JAL_uso_rs/rt = 1       | PARADA: Hasta que dato de JAL llegue WB |
--- | 4    | Lee registro      | ARIT / SW             | dep_* = 1 (Anticipación / Fwd)  | Ninguna de riesgo       | NO HAY PARADA. Se resuelve por Fwd.     |
--- | 5    | NOP / RTE         | Cualquiera            | dep_* = 0                       | Ninguna                 | NO HAY PARADA.                          |
--- | 6    | Cualquiera        | Cualquiera            | dep_* = 0 (Sin dependencias)    | Ninguna                 | NO HAY PARADA.                          |
--- | 7    | JAL               | Cualquiera            | JAL no lee registro             | Ninguna                 | NO HAY PARADA.                          |
--- | 8    | RET               | Escribe registro      | dep_rs_EX=1 o dep_rs_Mem=1      | RET_rs = 1              | PARADA: Hasta que el dato esté en WB    |
--- | 9    | Lee registro      | LW (en MEM)           | Dato disponible en memoria      | Ninguna                 | NO HAY PARADA. Fwd normal.              |
--- ---------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------
+
     signal dep_rs_EX, dep_rs_Mem, dep_rt_EX, dep_rt_Mem : std_logic;
     signal ld_uso_rs, ld_uso_rt, JAL_uso_rs, JAL_uso_rt : std_logic;
 	signal ld_uso, jal_uso, beq_uso : std_logic; 
@@ -57,6 +43,44 @@ architecture Behavioral of UD is
     constant FI_opcode   : std_logic_vector(5 downto 0) := "010000";
 
 begin
+
+-- Casos que activan Kill_IF
+-- ------------------------------------------------------------------
+-- | Caso | Instrucción en ID | Condición           | Señal activada|
+-- |------|-------------------|---------------------|---------------|
+-- | 1    | Salto JAL BEQ RET | salto_tomado=1 y    |Kill_IF=1      |
+--                            | valid_I_ID=1        |               |
+-- ------------------------------------------------------------------
+
+-- Casos que activan stall_ID
+-- -----------------------------------------------------------------------------------------------------------------------------------
+-- | Caso | Instrucción en ID | Instrucción en EX/MEM | Condición de Riesgo                  | Señal activada | Efecto                |
+-- |------|-------------------|-----------------------|--------------------------------------|----------------|-----------------------|
+-- | 1    | BEQ               | Escribe registro      | dep_rs_*=1 o dep_rt_*=1              | BEQ_rs/BEQ_rt  | Espera hasta WB       |
+-- | 2    | Lee registro      | LW (en EX)            | dep_rs/rt_EX=1 y MemRead_EX=1        | ld_uso_rs/rt   | Carga-uso, 1 ciclo    |
+-- | 3    | Lee registro      | JAL (en EX o MEM)     | dep_rs/rt_*=1 y JAL_*=1              | JAL_uso_rs/rt  | Espera hasta WB       |
+-- | 4    | RET               | Escribe registro      | dep_rs_EX=1 o dep_rs_Mem=1           | RET_rs         | Espera hasta WB       |
+-- -----------------------------------------------------------------------------------------------------------------------------------
+
+-- Casos que activan stall_MIPS
+-- -------------------------------------------------------------
+-- | Caso | Condición global                | Señal activada |
+-- |------|---------------------------------|---------------|
+-- | 1    | not(IO_MEM_ready) and valid_I_MEM| stall_MIPS=1  |
+-- | 2    | not(ALU_ready) and valid_I_EX    | stall_MIPS=1  |
+-- -------------------------------------------------------------
+
+-- Casos que NO activan paradas
+-- ------------------------------------------------------------------------------
+-- | Caso | Instrucción en ID | Instrucción en EX/MEM | Condición                |
+-- |------|-------------------|-----------------------|--------------------------|
+-- | 1    | Lee registro      | ARIT / SW             | dep_* = 1 (forwarding)   |
+-- | 2    | NOP / RTE         | Cualquiera            | dep_* = 0                |
+-- | 3    | Cualquiera        | Cualquiera            | dep_* = 0 (sin dependencias)|
+-- | 4    | JAL               | Cualquiera            | JAL no lee registro      |
+-- | 5    | Lee registro      | LW (en MEM)           | Dato disponible (forwarding normal)|
+-- ------------------------------------------------------------------------------
+
 
     ---------------------------------------------------------------------------
     -- 1. IDENTIFICACIÓN DE USO DE REGISTROS (rs_read / rt_read)
@@ -98,7 +122,6 @@ begin
 
 	ld_uso <= ld_uso_rs or ld_uso_rt; 
                                     
-    -- CASO CRÍTICO BEQ: Compara en ID. Si el productor está en EX o MEM,
     -- el BEQ debe parar hasta que el dato llegue a WB.
     BEQ_rs <= '1' when (IR_op_code = BEQ_opcode and (dep_rs_EX = '1' or dep_rs_Mem = '1')) else '0';
     BEQ_rt <= '1' when (IR_op_code = BEQ_opcode and (dep_rt_EX = '1' or dep_rt_Mem = '1')) else '0';

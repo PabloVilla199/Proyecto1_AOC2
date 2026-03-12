@@ -55,6 +55,7 @@ show_menu() {
     echo "  2) Pruebas de Interrupciones (IRQ, Abort, etc.)"
     echo "  3) Pruebas Data Path Saltos (JAL, RET)"
     echo "  4) Prueba Unidad de Deteccion (UD)"
+    echo "  5) Prueba Unidad de Anticipacion (UA)"
     read -r -p "Categoria: " TEST_CATEGORY
 
     case "$TEST_CATEGORY" in
@@ -119,8 +120,15 @@ show_menu() {
             esac
             ;;
         5)
-            TEST_NAME="all"
+            echo ""
+            echo -e "${YELLOW}>> Prueba Unidad de Anticipacion:${NC}"
+            echo "  1) Test Forwarding       (Test de forwarding MEM->EX)"
+            read -r -p "Opcion: " sub_opcion
+            case "$sub_opcion" in
+                1) TEST_NAME="test_forwarding" ;;
+            esac
             ;;
+            
         *)
             TEST_NAME=""
             ;;
@@ -142,7 +150,8 @@ normalize_test_name() {
         test_jump|jump) echo "test_jump" ;;
         test_lw|lw) echo "test_lw" ;;
         test_jal_if|jal_if) echo "test_jal_if" ;;
-        test_jal_ud) echo "test_jal_ud" ;;
+        test_jal_ud|jal_ud) echo "test_jal_ud" ;;
+        test_forwarding|forwarding) echo "test_forwarding" ;;
         all|todos) echo "all" ;;
         *) echo "" ;;
     esac
@@ -164,13 +173,14 @@ ram_i_file_for_test() {
         test_lw) echo "${ROMS_DIR}/room_UD/RAM_UD_test_lw.vhd" ;;
         test_jal_if) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jal_if.vhd" ;;
         test_jal_ud) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jal_ud.vhd" ;;
+        test_forwarding) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd.vhd" ;;
         *) echo "" ;;
     esac
 }
 
 data_ram_file_for_test() {
     case "$1" in
-        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
+        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
         *) echo "" ;;
     esac
@@ -301,6 +311,7 @@ if [ "$TEST_NAME_NORMALIZED" = "all" ]; then
     run_test_flow "test_beq"
     run_test_flow "test_lw"
     run_test_flow "test_jal_if"
+    run_test_flow "test_forwarding"
 else
     run_test_flow "$TEST_NAME_NORMALIZED"
 fi

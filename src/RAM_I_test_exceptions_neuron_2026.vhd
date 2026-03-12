@@ -25,27 +25,29 @@ end memoriaRAM_I;
 
 architecture Behavioral of memoriaRAM_I is
     type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
+    
+    -- LW R1, 0(R0)    -> R1 = 256  (Posición 0 de tu RAM-D)
+    -- LW R2, 4(R0)    -> R2 = 1    (Posición 1 de tu RAM-D)
+    -- ADD R3, R1, R2  -> R3 = 256 + 1 = 257
+    -- ADD R4, R3, R2  -> R4 = 257 + 1 = 258
+    -- SW R4, 68(R0)   -> Guarda 258 en Dir 68 (ram[17])
+    -- BEQ R0, R0, -1  -> STOP (Bucle infinito
 
-signal RAM : RamType := (           
-    -- Word 0-3: Tabla de Vectores
-    X"10210003", -- @00: Reset -> Salta a 0x10
-    X"1000FFFF", -- @04: IRQ
-    X"1000FFFF", -- @08: Data Abort
-    X"1000FFFF", -- @0C: UNDEF
-    
-    X"14000001", -- @10: JAL 0x14 (PC+4 + 1*4 = 0x14). 
-                 --      Escribe R31 = 0x14.        
-    X"04210800", -- @14: ADD R1, R1, R1 
-                 --      Esta instrucción -> KilliF = 1 
-                 
-    X"18000000", -- @18: RET (Opcode 000110). 
-                 --      Stall id = 1                  
-    X"1000FFFF", -- @1C: Bucle final
-    
+signal RAM : RamType := (
+    -- --- [1] CARGA DE DATOS (R1=256, R2=1) ---
+    0  => X"08010000", 
+    1  => X"08020004",
+
+    -- --- [2] TEST DE STAL (Carga-Uso) ---
+    2  => X"04221820",
+    -- --- [3] TEST DE FORWARDING (MEM -> EX) ---
+    3  => X"04622020", 
+
+    -- --- [4] Store  ---
+    4  => X"0C040044", 
+    5  => X"1000FFFF", 
     others => X"00000000"
 );
-
-    
     signal dir_7:  std_logic_vector(6 downto 0); 
 
 begin
