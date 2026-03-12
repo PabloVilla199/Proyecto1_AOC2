@@ -26,20 +26,25 @@ end memoriaRAM_I;
 architecture Behavioral of memoriaRAM_I is
     type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
 
-signal RAM : RamType := (           
-    -- Word 0-3: Tabla de Vectores
-    X"10210003", -- @00: Reset -> Salta a 0x10
-    X"1000FFFF", -- @04: IRQ
-    X"1000FFFF", -- @08: Data Abort
-    X"1000FFFF", -- @0C: UNDEF
+----------------------------------------------------------------------------------
+    -- ROM DE PRUEBA: STRESS TEST DE UD (Stalls + Kill_IF)
+    ----------------------------------------------------------------------------------
+    --@10: JAL 0x18 (Salta 2 instrucciones adelante desde PC+4)
+    -- @14: ADD R1, R1, R1 <-- DEBE SER KILLEADA (valid_i_id = 0)
+    -- @18: ADD R2, R2, R2 <-- DESTINO DEL SALTO
+    -- @1C: Bucle final
+    ----------------------------------------------------------------------------------
     
-    X"14000001", -- @10: JAL 0x14 (PC+4 + 1*4 = 0x14). 
-                 --      Escribe R31 = 0x14.        
-    X"04210800", -- @14: ADD R1, R1, R1 
-                 --      Esta instrucción -> KilliF = 1 
-                 
-    X"18000000", -- @18: RET (Opcode 000110). 
-                 --      Stall id = 1                  
+    signal RAM : RamType := (           
+    -- Word 0-3: Tabla de Vectores
+    X"10210003", -- @00: Reset (Salta a la 0x10)
+    X"1000FFFF", -- @04: IRQ (Bucle)
+    X"1000FFFF", -- @08: Data Abort (Bucle)
+    X"1000FFFF", -- @0C: UNDEF (Bucle)
+    
+    X"14000001", -- @10: JAL 0x18 (Salta a 0x18)
+    X"04210800", -- @14: ADD R1, R1, R1 <-- Kill_IF = 1 , (valid_i_id = 0)
+    X"04421000", -- @18: ADD R2, R2, R2 <-- DESTINO DEL SALTO
     X"1000FFFF", -- @1C: Bucle final
     
     others => X"00000000"

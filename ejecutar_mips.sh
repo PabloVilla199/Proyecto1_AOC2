@@ -36,8 +36,10 @@ show_help() {
     echo "  8) test_jal             -> room_jal_ret/RAM_I_test_jal + RAM_D_default"
     echo "  9) test_ret             -> room_jal_ret/RAM_I_test_ret + RAM_D_default"
     echo " 10) test_beq (UD)        -> room_UD/RAM_test_beq + RAM_D_default"
-    echo " 11) test_lw (UD)         -> room_UD/RAM_test_lw + RAM_D_default"
-    echo " 12) all                  -> Ejecuta todos los tests anteriores (1 al 11)"
+    echo "  11) test_lw (UD)         -> room_UD/RAM_test_lw + RAM_D_default"
+    echo "  12) test_jal_if (UD)     -> room_UD/RAM_test_jal_if + RAM_D_default"
+    echo "  13) test_jal_ud (UD)     -> room_UD/RAM_test_jal_ud + RAM_D_default"
+    echo "  14) all                  -> Ejecuta todos los tests anteriores (1 al 13 )"
     echo ""
     echo "Aliases compatibles: jal -> test_jal, ret -> test_ret, rte -> test_rte, beq -> test_beq, ud -> test_beq, lw -> test_lw"
     echo ""
@@ -104,11 +106,15 @@ show_menu() {
             echo "  1) Test BEQ             (Riesgo BEQ stall_ID)"
             echo "  2) Test Jump          (Riesgo Kill_IF)"
             echo "  3) Test LW uso          (Riesgo Load-Use)"
+            echo "  4) Test JAL IF          (Riesgo Jal-Kill_IF)" 
+            echo "  5) Test JAL UD          (Riesgo Jal-Use)"
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="test_beq" ;;
                 2) TEST_NAME="test_jump" ;;
                 3) TEST_NAME="test_lw" ;;
+                4) TEST_NAME="test_jal_if" ;;
+                5) TEST_NAME="test_jal_ud" ;;
                 *) TEST_NAME="" ;;
             esac
             ;;
@@ -135,6 +141,8 @@ normalize_test_name() {
         test_beq|beq|ud) echo "test_beq" ;;
         test_jump|jump) echo "test_jump" ;;
         test_lw|lw) echo "test_lw" ;;
+        test_jal_if|jal_if) echo "test_jal_if" ;;
+        test_jal_ud) echo "test_jal_ud" ;;
         all|todos) echo "all" ;;
         *) echo "" ;;
     esac
@@ -151,16 +159,18 @@ ram_i_file_for_test() {
         test_rte) echo "${ROMS_DIR}/roms_Interrupciones/RAM_I_test_rte.vhd" ;;
         test_jal) echo "${ROMS_DIR}/room_jal_ret/RAM_I_test_jal.vhd" ;;
         test_ret) echo "${ROMS_DIR}/room_jal_ret/RAM_I_test_ret.vhd" ;;
-        test_beq) echo "${ROMS_DIR}/room_UD/RAM_test_beq.vhd" ;;
-        test_jump) echo "${ROMS_DIR}/room_UD/RAM_test_jump.vhd" ;;
-        test_lw) echo "${ROMS_DIR}/room_UD/RAM_test_lw.vhd" ;;
+        test_beq) echo "${ROMS_DIR}/room_UD/RAM_UD_test_beq.vhd" ;;
+        test_jump) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jump.vhd" ;;
+        test_lw) echo "${ROMS_DIR}/room_UD/RAM_UD_test_lw.vhd" ;;
+        test_jal_if) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jal_if.vhd" ;;
+        test_jal_ud) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jal_ud.vhd" ;;
         *) echo "" ;;
     esac
 }
 
 data_ram_file_for_test() {
     case "$1" in
-        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
+        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
         *) echo "" ;;
     esac
@@ -290,6 +300,7 @@ if [ "$TEST_NAME_NORMALIZED" = "all" ]; then
     run_test_flow "test_ret"
     run_test_flow "test_beq"
     run_test_flow "test_lw"
+    run_test_flow "test_jal_if"
 else
     run_test_flow "$TEST_NAME_NORMALIZED"
 fi
