@@ -71,7 +71,7 @@ begin
 -- |  4   | WB  -> EX (Operando Rt)  | (Reg_Rt_EX = RW_WB)  and RegWrite_WB  and valid_I_WB  | Corto_B_WB=1   | Mux_B = "10" |
 -- |  5   | Doble (Prioridad MEM)    | Corto_MEM = '1' and Corto_WB = '1'                    | Corto_A/B_Mem  | Mux_A/B="01" |
 -- |  6   | JAL Distancia 2 (busW)   | (Reg_Rs/t_EX = RW_WB) and jal_WB = '1'                | Corto_A/B_WB=1 | Mux_A/B="10" |
--- |  7   | Sin Riesgo / R0 / NOP    | Default                                               | Ninguna        | Mux_A/B="00" |
+-- |  7   | Sin Riesgo  / NOP        | Default                                               | Ninguna        | Mux_A/B="00" |
 -- ===========================================================================================================================
 
 -------------------------------------------------------------------------------------------------------------------------------

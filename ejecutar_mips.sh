@@ -39,6 +39,8 @@ show_help() {
     echo "  11) test_lw (UD)         -> room_UD/RAM_test_lw + RAM_D_default"
     echo "  12) test_jal_if (UD)     -> room_UD/RAM_test_jal_if + RAM_D_default"
     echo "  13) test_jal_ud (UD)     -> room_UD/RAM_test_jal_ud + RAM_D_default"
+    echo "  14) test_forwarding (UA) -> roms_UA/RAM_UA_fwd + RAM_D_default"
+    echo "  15) test_forwarding_prioridad (UA) -> roms_UA/RAM_UA_fwd_prioridad + RAM_D_default"
     echo "  14) all                  -> Ejecuta todos los tests anteriores (1 al 13 )"
     echo ""
     echo "Aliases compatibles: jal -> test_jal, ret -> test_ret, rte -> test_rte, beq -> test_beq, ud -> test_beq, lw -> test_lw"
@@ -123,9 +125,14 @@ show_menu() {
             echo ""
             echo -e "${YELLOW}>> Prueba Unidad de Anticipacion:${NC}"
             echo "  1) Test Forwarding       (Test de forwarding MEM->EX)"
+            echo "  2) Test Prioridad Forwarding (Test de prioridad MEM sobre WB)"
+            echo "  3) Test Forwarding JAL     (Test de forwarding JAL)"
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="test_forwarding" ;;
+                2) TEST_NAME="test_forwarding_prioridad" ;;
+                3) TEST_NAME="test_forwarding_jal" ;;
+                
             esac
             ;;
             
@@ -152,6 +159,8 @@ normalize_test_name() {
         test_jal_if|jal_if) echo "test_jal_if" ;;
         test_jal_ud|jal_ud) echo "test_jal_ud" ;;
         test_forwarding|forwarding) echo "test_forwarding" ;;
+        test_forwarding_prioridad|forwarding_prioridad) echo "test_forwarding_prioridad" ;;
+        test_forwarding_jal|forwarding_jal) echo "test_forwarding_jal" ;;
         all|todos) echo "all" ;;
         *) echo "" ;;
     esac
@@ -174,13 +183,15 @@ ram_i_file_for_test() {
         test_jal_if) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jal_if.vhd" ;;
         test_jal_ud) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jal_ud.vhd" ;;
         test_forwarding) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd.vhd" ;;
+        test_forwarding_prioridad) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_prioridad.vhd" ;;
+        test_forwarding_jal) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_jal.vhd" ;;
         *) echo "" ;;
     esac
 }
 
 data_ram_file_for_test() {
     case "$1" in
-        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
+        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
         *) echo "" ;;
     esac
@@ -312,6 +323,8 @@ if [ "$TEST_NAME_NORMALIZED" = "all" ]; then
     run_test_flow "test_lw"
     run_test_flow "test_jal_if"
     run_test_flow "test_forwarding"
+    run_test_flow "test_forwarding_prioridad"
+    run_test_flow "test_forwarding_jal"
 else
     run_test_flow "$TEST_NAME_NORMALIZED"
 fi

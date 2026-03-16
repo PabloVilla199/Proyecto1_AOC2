@@ -131,11 +131,10 @@ begin
     -- CASO RET: Igual que el BEQ, usa Rs en ID y debe esperar al productor
     RET_rs <= '1' when (IR_op_code = RET_opcode and (dep_rs_EX = '1' or dep_rs_Mem = '1')) else '0';
     
-    -- JAL: Parada si ID necesita el registro que JAL está escribiendo en EX o MEM
-    JAL_uso_rs <= '1' when ((dep_rs_EX = '1' and JAL_EX = '1') or 
-                            (dep_rs_Mem = '1' and JAL_MEM = '1')) else '0';
-    JAL_uso_rt <= '1' when ((dep_rt_EX = '1' and JAL_EX = '1') or 
-                            (dep_rt_Mem = '1' and JAL_MEM = '1')) else '0';
+    -- JAL: Parada si ID necesita el registro que JAL está escribiendo en EX 
+    -- Cuando este en MEM hacemos forwarding normal en WB
+    JAL_uso_rs <= '1' when ((dep_rs_EX = '1' and JAL_EX = '1')) else '0';
+    JAL_uso_rt <= '1' when ((dep_rt_EX = '1' and JAL_EX = '1')) else '0';
 
 	jal_uso <= JAL_uso_rs or JAL_uso_rt;							
    ---------------------------------------------------------------------------
