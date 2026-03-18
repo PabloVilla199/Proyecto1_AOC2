@@ -56,10 +56,6 @@ signal RAM : RamType := (
     2  => X"1000FFFF", -- @08: Abort (Bucle)
     3  => X"1000FFFF", -- @0C: UNDEF (Bucle)
 
-    -- [Word 4-15] .CODE - Carga de operandos
-    -- Supongamos que en la RAM de datos:
-    -- ADDR 32 (Word 8): Pesos (X"01020304")
-    -- ADDR 48 (Word 12): Activaciones (X"01010101")
     4  => X"08010020", -- LW R1, 32(R0)  -> R1 = Pesos
     5  => X"08020030", -- LW R2, 48(R0)  -> R2 = Activaciones
     6  => X"00000000", -- NOP (Espera a que lleguen los datos)

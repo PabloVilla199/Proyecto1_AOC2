@@ -31,67 +31,95 @@ end ALU_Vector_MAC;
 
 architecture Behavioral of ALU_Vector_MAC is
 
-component reg is
-    generic (size: natural := 32);  -- por defecto son de 32 bits, pero se puede usar cualquier tamaÒo
-	Port ( Din : in  STD_LOGIC_VECTOR (size -1 downto 0);
-           clk : in  STD_LOGIC;
-		   reset : in  STD_LOGIC;
-           load : in  STD_LOGIC;
-           Dout : out  STD_LOGIC_VECTOR (size -1 downto 0));
-end component;
+    type state_type is (IDLE, PROD, SUM, ACC);
+    signal state, next_state: state_type := IDLE;
 
-signal Dout_internal: STD_LOGIC_VECTOR (31 downto 0);
-signal ACC_out : STD_LOGIC_VECTOR (31 downto 0) := X"00000000";
-signal ACC_input, sum_total_ext: Signed (31 downto 0);
-signal prod0, prod1, prod2, prod3 : Signed(15 downto 0);
-signal sum1, sum2 : Signed(16 downto 0);
-signal sum_total : Signed(17 downto 0);
-signal load_acc, Acc_op, MAC_start : STD_LOGIC;
+    -- Registros intermedios para multiciclo
+    signal prod0_reg, prod1_reg, prod2_reg, prod3_reg: signed(15 downto 0) := (others => '0');
+    signal sum1_reg, sum2_reg: signed(16 downto 0) := (others => '0');
+    signal ACC_reg: signed(31 downto 0) := (others => '0');
+
+    signal ready_int: std_logic;
+    signal mac_op, mac_ini_op, is_mac: std_logic;
+
 begin
--- IMPORTANT
--- VHDL is strongly typed.
--- In VHDL, types do not just describe the size of a signal, they describe its meaning. 
--- A std_logic_vector means ìa bundle of bits,î nothing more. 
--- A signed signal means ìa two's complement number.î Because the language is strongly typed, VHDL wonít let you accidentally treat raw bits as a number or mix numeric and non-numeric types without being explicit.
--- In VHDL, you need to use the signed type for C2 (twoís-complement) arithmetic because arithmetic operators like +, -, and comparisons are only numerically defined for the signed and unsigned types in numeric_std, not for std_logic_vector. 
--- A std_logic_vector is just a collection of bits with no inherent numerical meaning, so the compiler has no way to know whether those bits represent a positive or negative number or how to interpret the sign bit.
--- By converting the operands to signed, you explicitly tell VHDL to interpret the MSB as the sign bit and to perform proper twoís-complement arithmetic. 
--- After the calculation, the result is typically converted back to std_logic_vector to store it in a register because registers and ports are often defined as std_logic_vector for generality and compatibility with other logic, interfaces, and synthesis tools. 
--- This separation keeps arithmetic correct and unambiguous while still allowing flexible storage and data movement.
--- NOTE: If you add additional registers you will have to adjust types
--- See the ACC_register for an example: 
--- 1) To use ACC_input as input, first it is transformed to std_logic_vector with: std_logic_vector(ACC_input)
--- 2) To use the output for signed arithmetic operations, first it is transformed to signed: else sum_total_ext + signed(ACC_out);
 
-	prod0 <= signed(DA(7 downto 0))   * signed(DB(7 downto 0));
-	prod1 <= signed(DA(15 downto 8))  * signed(DB(15 downto 8));
-	prod2 <= signed(DA(23 downto 16)) * signed(DB(23 downto 16));
-	prod3 <= signed(DA(31 downto 24)) * signed(DB(31 downto 24));
-	sum1 <= (prod0(15) & prod0) + (prod1(15) & prod1);
-	sum2 <= (prod2(15) & prod2) + (prod3(15) & prod3);
-	sum_total <= (sum1(16) & sum1) + (sum2(16) & sum2);
-	sum_total_ext(17 downto 0) <= sum_total;
-	sum_total_ext(31 downto 18) <= "00000000000000" when sum_total(17)='0' else "11111111111111";
-	
-	--It is important not to update the ACC register with invalid instructions
-	Acc_op <= '1' when (ALUctrl(2 downto 1) = "10") else '0'; --Acc operations: "100" and "101" 
-	load_acc <= Acc_op and valid_I_EX; 
-	MAC_start <=   '1' when (ALUctrl(0) = '1') else '0'; -- If ALUCtrl = "101" the accumulation register is restarted
-	
-	ACC_input	 <= 	sum_total_ext when (MAC_start = '1')
-						else sum_total_ext + signed(ACC_out);	
-	--reset is currentlly unused in the ALU, but it will be needed if it becomes multicycle
-	ACC_register: reg 	generic map (size => 32)
-						port map (	Din => std_logic_vector(ACC_input), clk => clk, reset => '0', load => load_acc, Dout => ACC_out);
-	
-	
-	Dout_internal <= 	DA + DB when (ALUctrl="000") 
-				else DA - DB when (ALUctrl="001") 
-				else DA AND DB when (ALUctrl="010")
-				else DA OR DB when (ALUctrl="011")
-				else std_logic_vector(ACC_input) when (ALUctrl(2 downto 1) = "10")
-				else "00000000000000000000000000000000";
-	Dout <= Dout_internal;
-	-- to be updated:
-	ready <= '1';
+    -- Detectar si la instrucci√≥n actual en EX es una operaci√≥n MAC
+    mac_op     <= '1' when (ALUctrl = "100") else '0';
+    mac_ini_op <= '1' when (ALUctrl = "101") else '0';
+    is_mac     <= (mac_op or mac_ini_op) and valid_I_EX;
+
+    -- M√°quina de estados 
+    process(clk, reset)
+    begin
+        if reset = '1' then
+            state <= IDLE;
+            ACC_reg <= (others => '0');
+        elsif rising_edge(clk) then
+            if valid_I_EX = '0' then
+                state <= IDLE;
+            else
+                state <= next_state;
+            end if;
+
+            case state is
+                when IDLE =>
+                    if is_mac = '1' then
+                        -- Ciclo 1: Multiplicar y guardar en registros
+                        prod0_reg <= signed(DA(7 downto 0))   * signed(DB(7 downto 0));
+                        prod1_reg <= signed(DA(15 downto 8))  * signed(DB(15 downto 8));
+                        prod2_reg <= signed(DA(23 downto 16)) * signed(DB(23 downto 16));
+                        prod3_reg <= signed(DA(31 downto 24)) * signed(DB(31 downto 24));
+                    end if;
+
+                when PROD =>
+                    -- Ciclo 2: Sumar productos parciales en registros
+                    sum1_reg <= (prod0_reg(15) & prod0_reg) + (prod1_reg(15) & prod1_reg);
+                    sum2_reg <= (prod2_reg(15) & prod2_reg) + (prod3_reg(15) & prod3_reg);
+
+                when SUM =>
+                    -- Ciclo 3: Suma final y actualizaci√≥n del acumulador (ACC)
+                    if mac_ini_op = '1' then
+                        ACC_reg <= resize((sum1_reg(16) & sum1_reg) + (sum2_reg(16) & sum2_reg), 32);
+                    else
+                        ACC_reg <= ACC_reg + resize((sum1_reg(16) & sum1_reg) + (sum2_reg(16) & sum2_reg), 32);
+                    end if;
+
+                when others => null;
+            end case;
+        end if;
+    end process;
+
+    -- L√≥gica de transici√≥n de estados (Combinacional)
+    process(state, is_mac)
+    begin
+        next_state <= state;
+        case state is
+            when IDLE =>
+                if is_mac = '1' then next_state <= PROD; end if;
+            when PROD =>
+                next_state <= SUM;
+            when SUM =>
+                next_state <= ACC;
+            when ACC =>
+                next_state <= IDLE;
+            when others =>
+                next_state <= IDLE;
+        end case;
+    end process;
+
+    -- Se√±al READY para la Unidad de Detenci√≥n (UD)
+    -- Se mantiene a '0' durante los estados de c√°lculo (PROD, SUM)
+    -- Vuelve a '1' en ACC porque el dato en ACC_reg ya es v√°lido en este ciclo.
+    ready_int <= '0' when (is_mac = '1' and (state = IDLE or state = PROD or state = SUM)) else '1';
+    ready <= ready_int;
+
+    -- Salida de la ALU
+    Dout <= DA + DB when (ALUctrl = "000") else
+            DA - DB when (ALUctrl = "001") else
+            DA AND DB when (ALUctrl = "010") else
+            DA OR DB when (ALUctrl = "011") else
+            std_logic_vector(ACC_reg) when (mac_op = '1' or mac_ini_op = '1') else
+            (others => '0');
+
 end Behavioral;

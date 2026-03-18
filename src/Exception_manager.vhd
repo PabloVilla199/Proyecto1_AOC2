@@ -44,14 +44,6 @@ end component;
 	signal Return_I : std_logic_vector(31 downto 0);
 	signal update_status, Exception_accepted_internal: std_logic;
 	
-	-- Se�ales de detección de cada tipo de excepción (sin considerar habilitación ni stall)
-	signal exception_Data_abort : std_logic;  -- Error en acceso a memoria (MEM stage)
-	signal exception_UNDEF : std_logic;       -- Instrucción inválida (ID stage)
-	signal exception_IRQ : std_logic;         -- Interrupción externa
-	
-	-- Se�al para determinar cuál excepción tiene MAYOR prioridad
-	signal exception_with_priority : std_logic_vector(2 downto 0); -- "100"=Data_abort, "010"=UNDEF, "001"=IRQ
-	
 -- ================================================================================
 -- GESTIÓN DE EXCEPCIONES: ARQUITECTURA Y COMPORTAMIENTO
 -- ================================================================================
@@ -89,7 +81,9 @@ Begin
 	update_status	<= Exception_accepted_internal or (RTE_ID AND valid_I_ID AND not(stall_MIPS));
 	
 	-- Sol: se procesa una excepci�n si se recibe IRQ y las excepciones est�n habilitadas (MIPS_status(1)='0') y el procesador no est� parado (stall_MIPS = '0')
-	Exception_accepted_internal <= '1' when (((IRQ = '1') or ((Data_abort = '1')and (valid_I_MEM = '1')) or ((UNDEF = '1') and (valid_I_ID = '1'))) AND (MIPS_status(1)='0') AND (stall_MIPS = '0')) else '0';
+	Exception_accepted_internal <= '1' when (((IRQ = '1') or ((Data_abort = '1')and (valid_I_MEM = '1')) or 
+											((UNDEF = '1') and (valid_I_ID = '1'))) 
+											AND (MIPS_status(1)='0') AND (stall_MIPS = '0')) else '0';
 	Exception_accepted <= Exception_accepted_internal;
 	-- Fin completar;
 	------------------------------------------------------------------------------------

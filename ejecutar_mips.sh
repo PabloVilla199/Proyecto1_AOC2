@@ -58,6 +58,7 @@ show_menu() {
     echo "  3) Pruebas Data Path Saltos (JAL, RET)"
     echo "  4) Prueba Unidad de Deteccion (UD)"
     echo "  5) Prueba Unidad de Anticipacion (UA)"
+    echo " 6) MAC Multiciclo"
     read -r -p "Categoria: " TEST_CATEGORY
 
     case "$TEST_CATEGORY" in
@@ -135,6 +136,16 @@ show_menu() {
                 
             esac
             ;;
+        6)
+            echo ""
+            echo -e "${YELLOW}>> Pruebas MAC Multiciclo:${NC}"
+            echo "  1) Delayed MAC          (Multiplicacion MC)"
+            read -r -p "Opcion: " sub_opcion
+            case "$sub_opcion" in
+                1) TEST_NAME="mac_multiciclo" ;;
+                *) TEST_NAME="" ;;
+            esac
+            ;;
             
         *)
             TEST_NAME=""
@@ -161,6 +172,7 @@ normalize_test_name() {
         test_forwarding|forwarding) echo "test_forwarding" ;;
         test_forwarding_prioridad|forwarding_prioridad) echo "test_forwarding_prioridad" ;;
         test_forwarding_jal|forwarding_jal) echo "test_forwarding_jal" ;;
+        test_mac|mac_multiciclo) echo "mac_multiciclo" ;;
         all|todos) echo "all" ;;
         *) echo "" ;;
     esac
@@ -185,13 +197,14 @@ ram_i_file_for_test() {
         test_forwarding) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd.vhd" ;;
         test_forwarding_prioridad) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_prioridad.vhd" ;;
         test_forwarding_jal) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_jal.vhd" ;;
+        test_mac|mac_multiciclo) echo "${ROMS_DIR}/room_MAC/RAM_MAC.vhd" ;;
         *) echo "" ;;
     esac
 }
 
 data_ram_file_for_test() {
     case "$1" in
-        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
+        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
         *) echo "" ;;
     esac
@@ -325,6 +338,7 @@ if [ "$TEST_NAME_NORMALIZED" = "all" ]; then
     run_test_flow "test_forwarding"
     run_test_flow "test_forwarding_prioridad"
     run_test_flow "test_forwarding_jal"
+    run_test_flow "mac_multiciclo"
 else
     run_test_flow "$TEST_NAME_NORMALIZED"
 fi
