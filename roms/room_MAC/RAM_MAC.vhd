@@ -1,6 +1,5 @@
 ----------------------------------------------------------------------------------
 -- Company: Univesidad de Zaragoza
--- Engineer: Javier Resano/Jose Luis Briz
 -- 
 -- Create Date:    10:38:16 27/12/2024 
 -- Design Name: 
@@ -32,20 +31,26 @@ entity memoriaRAM_I is port (
 end memoriaRAM_I;
 
 --------------------------------------------------------------------------------------------------------------------------------
--- TEST JAL (Jump and Link)
--- 
--- Comportamiento esperado:
--- 1. Inicializa R31 con valor conocido (0xBAD0) para verificar que JAL lo sobreescribe
--- 2. Carga valores en R1 y R2
--- 3. JAL salta a dirección 0x100 (word 64) y guarda dirección de retorno (PC+4) en R31
--- 4. En destino (word 64): hace operación y escribe resultado
--- 5. Observar en simulación:
---    - R31 debe cambiar de 0xBAD0 a dirección de retorno (0x20 = word 8)
---    - PC debe saltar a 0x100
---    - MEM[0] debe contener 0xCAFE (marcador de éxito)
---    - MEM[4] debe contener dirección de retorno guardada en R31
+-- TEST MAC_INI y MAC (MULTICICLO)
 --------------------------------------------------------------------------------------------------------------------------------
-
+-- RESULTADO ESPERADO EN SIMULACIÓN (BASADO EN GTKWAVE):
+--
+-- 1. COMPORTAMIENTO DEL PIPELINE (UD + ALU_READY):
+--    - Cuando la instrucción MAC_INI  llega a la etapa EX, la señal 'alu_ready' cae a '0'.
+--    - La Unidad de Detención (UD) detecta 'alu_ready=0' y activa 'stall_mips' durante 3 ciclos de reloj.
+--    - El PC y las etapas IF/ID se congelan. el PC se mantiene en 0x24.
+--
+-- 2. EVOLUCIÓN DE LA FSM INTERNA (ETAPA EX):
+--    - Ciclo 1: Estado PROD. Se registran los 4 productos de los bytes de R1 y R2.
+--    - Ciclo 2: Estado SUM. Se realiza la suma del árbol de productos parciales.
+--    - Ciclo 3: Estado ACC. Se actualiza el registro sombra ACC_reg y se pone 'alu_ready=1'.
+--
+-- 3. CÁLCULO ARITMÉTICO (DATOS):
+--    - Operandos: R1 (Pesos) = X"27CF25CC", R2 (Activaciones) = X"12E625CC".
+--    - Suma de productos vectoriales: (39*18) + (-49*-26) + (37*37) + (-52*-52) = 6049.
+--    - R10 (tras MAC_INI): 6049 (X"000017A1"). El acumulador se inicia con este valor.
+--    - R11 (tras MAC): 12098 (X"00002F42"). Se suma el nuevo cálculo al ACC anterior.
+--------------------------------------------------------------------------------------------------------------------------------
 architecture Behavioral of memoriaRAM_I is
 type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
 

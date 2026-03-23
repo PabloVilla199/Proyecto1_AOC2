@@ -30,22 +30,24 @@ entity memoriaRAM_I is port (
 		  	Dout : out std_logic_vector (31 downto 0));
 end memoriaRAM_I;
 --------------------------------------------------------------------------------------------------------------------------------
--- TEST MAC_CONTROL: MAC seguida de BEQ (Sin dependencia de datos)
+-- TEST MAC_RAW_ALU: Doble dependencia RAW (MAC -> ADD -> ADD)
 --------------------------------------------------------------------------------------------------------------------------------
 -- RESULTADO ESPERADO EN SIMULACIÓN:
 --
--- 1. STALL MULTICICLO:
+-- 1. CICLOS DE STALL:
 --    - Cuando la MAC (Word 8) entra en EX, 'alu_ready' baja a '0'.
---    - El BEQ (Word 9) llega a la etapa ID y se queda ahí bloqueado por 'stall_mips' durante 3 ciclos.
+--    - El ADD de la Word 9 se queda bloqueado en la etapa ID durante 3 ciclos.
 --
--- 2. GESTIÓN DEL SALTO:
---    - Aunque el BEQ determine que debe saltar (R0 siempre es igual a R0), el PC no puede cargarse 
---      con la dirección de destino hasta que 'alu_ready' vuelva a '1'.
+-- 2. FORWARDING DISTANCIA 1 (MEM a EX):
+--    - En el ciclo en que el primer ADD (Word 9) por fin entra en EX, la MAC está en MEM.
+--    - El valor 6049 (X"17A1") se inyecta desde el registro de segmentación EX/MEM.
 --
--- 3. FLUJO DEL PIPELINE:
---    - Tras los 3 ciclos de stall, la MAC pasa a MEM/WB.
---    - El BEQ se ejecuta, pone 'salto_tomado = 1' y el PC salta a la Word 64 (0x100).
---    - La instrucción en Word 10 debe ser eliminada (Kill_IF) por el salto.
+-- 3. FORWARDING DISTANCIA 2 (WB a EX):
+--    - Cuando el segundo ADD (Word 10) entra en EX, la MAC está en WB.
+--    - El valor 6049 se inyecta desde el registro de segmentación MEM/WB.
+--
+-- 4. RESULTADO FINAL:
+--    - El Banco de Registros (BReg) debe informar de dos escrituras seguidas en R12 con el valor 6049.
 --------------------------------------------------------------------------------------------------------------------------------
 
 architecture Behavioral of memoriaRAM_I is
@@ -58,26 +60,23 @@ signal RAM : RamType := (
     2  => X"1000FFFF", -- @08: Abort
     3  => X"1000FFFF", -- @0C: UNDEF
 
-    -- [Word 4-7] Preparación
+    -- [Word 4-7] Preparación: Carga de operandos
     4  => X"08010020", -- LW R1, 32(R0)
     5  => X"08020030", -- LW R2, 48(R0)
     6  => X"00000000", -- NOP
     7  => X"00000000", -- NOP
 
-    -- [Word 8] MAC_INI
+    -- [Word 8] MAC_INI: Produce 6049 (X"17A1") en R10
     8  => X"04225005", -- MAC_INI R10, R1, R2 
 
-    -- [Word 9] BEQ R0, R0, Destino (Salto a la Word 64 / 0x100)
-    -- Op(000100) rs(0) rt(0) imm(X"0036" -> 54 words de salto desde PC+4)
-    9  => X"10000036", 
+    -- [Word 9] ADD Distancia 1: R12 = R10 + R0
+    9  => X"05406000", -- ADD R12, R10, R0 (Fwd desde MEM)
 
-    -- [Word 10] Instrucción que NO debe ejecutarse (si el salto funciona)
-    10 => X"05406000", -- ADD R12, R10, R0 (Fwd desde MEM)
+    -- [Word 10] ADD Distancia 2: R12 = R10 + R0
+    10 => X"05406000", -- ADD R12, R10, R0 (Fwd desde WB)
 
-    -- [Word 64] Destino del Salto (@0x100)
-    64 => X"05406000", -- ADD R12, R10, R0 (Ejecutada tras el salto)
-    65 => X"1000FFFF", -- Bucle final
-    
+    -- [Word 11] Bucle Final
+    11 => X"1000FFFF", 
     others => X"00000000"
 );
 signal dir_7:  std_logic_vector(6 downto 0); 

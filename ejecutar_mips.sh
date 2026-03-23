@@ -139,10 +139,15 @@ show_menu() {
         6)
             echo ""
             echo -e "${YELLOW}>> Pruebas MAC Multiciclo:${NC}"
-            echo "  1) Delayed MAC          (Multiplicacion MC)"
+            echo "  1) MAC multiciclo          (Multiplicacion MC)"
+            echo "  2) MAC depdencias RAW "
+            echo "  3) MAC y despues BEQ "
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="mac_multiciclo" ;;
+                2) TEST_NAME="mac_raw" ;;
+                3) TEST_NAME="mac_beq" ;;
+
                 *) TEST_NAME="" ;;
             esac
             ;;
@@ -173,6 +178,8 @@ normalize_test_name() {
         test_forwarding_prioridad|forwarding_prioridad) echo "test_forwarding_prioridad" ;;
         test_forwarding_jal|forwarding_jal) echo "test_forwarding_jal" ;;
         test_mac|mac_multiciclo) echo "mac_multiciclo" ;;
+        test_mac_raw|mac_raw) echo "mac_raw" ;;
+        test_mac_beq|mac_beq) echo "mac_beq" ;;
         all|todos) echo "all" ;;
         *) echo "" ;;
     esac
@@ -198,13 +205,16 @@ ram_i_file_for_test() {
         test_forwarding_prioridad) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_prioridad.vhd" ;;
         test_forwarding_jal) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_jal.vhd" ;;
         test_mac|mac_multiciclo) echo "${ROMS_DIR}/room_MAC/RAM_MAC.vhd" ;;
+        test_mac_raw|mac_raw) echo "${ROMS_DIR}/room_MAC/RAM_MAC_RAW.vhd" ;;
+        test_mac_beq|mac_beq) echo "${ROMS_DIR}/room_MAC/RAM_MAC_BEQ.vhd" ;;
+
         *) echo "" ;;
     esac
 }
 
 data_ram_file_for_test() {
     case "$1" in
-        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
+        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo|mac_raw|mac_beq) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
         *) echo "" ;;
     esac
@@ -225,7 +235,6 @@ apply_memory_profiles() {
 
     if [ ! -f "$data_ram_file" ]; then
         echo -e "${RED}✗ No se encontro RAM de datos para el test: $test en la ruta '$data_ram_file'${NC}"
-        # Algunos estudiantes omiten la ram_data, si no existe continuamos pero en este caso queremos ser exhaustivos
         return 1
     fi
 
@@ -339,6 +348,8 @@ if [ "$TEST_NAME_NORMALIZED" = "all" ]; then
     run_test_flow "test_forwarding_prioridad"
     run_test_flow "test_forwarding_jal"
     run_test_flow "mac_multiciclo"
+    run_test_flow "mac_raw"
+    run_test_flow "mac_beq"
 else
     run_test_flow "$TEST_NAME_NORMALIZED"
 fi
