@@ -593,7 +593,7 @@ begin
 										MemtoReg_MEM => MemtoReg_MEM, RegWrite_MEM => RegWrite_MEM, 
 										--COMPLETE: If we use BusB_EX the sw will not be able to make shorts on rt
 										-- which signal should we use to use the shorting network?
-										BusB_EX => BusB_EX,  
+										BusB_EX => Mux_B_out,  
 										--FIN COMPLETAR
 										BusB_MEM => BusB_MEM, RW_EX => RW_EX, RW_MEM => RW_MEM,
 										valid_I_EX => valid_I_MEM_in, valid_I_MEM => valid_I_MEM,
