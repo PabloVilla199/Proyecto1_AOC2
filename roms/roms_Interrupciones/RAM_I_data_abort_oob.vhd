@@ -51,7 +51,32 @@ type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
 -- From Word 96 (@180): Data abort (code for the Data Abort exception)
 -- From Word 112(@1C0): UNDEF (code for the UNDEF exception)
 --------------------------------------------------------------------------------------------------------------------------------
-
+----------------------------------------------------------------------------------
+-- DIAGNÓSTICO TÉCNICO: TESTBENCH 4 - DATA ABORT (ERROR DE ACCESO A DATOS)
+----------------------------------------------------------------------------------
+-- 1. DETECCIÓN DEL FALLO (Etapa MEM):
+--    * PC: 0x00000010 (Word 4 de la RAM_I).
+--    * Instrucción: 0x08017FFC (LW R1, 32767(R0)).
+--    * Causa: Dirección de memoria (32767) desalineada (no es múltiplo de 4).
+--    * Acción Hardware: La etapa MEM detecta el error y activa 'data_abort'.
+--
+-- 2. PROTOCOLO DE EMERGENCIA (Hardware de Riesgos):
+--    * exception_accepted: Se activa al final de la etapa MEM.
+--    * Exception_LR: Almacena la dirección de retorno (0x00000014).
+--    * Flush del Pipeline: Se anulan TODAS las instrucciones previas (IF, ID, EX).
+--    * Salto al Vector: El PC carga la dirección 0x00000008 (Vector Data Abort).
+--
+-- 3. RUTINA DE SERVICIO (ISR - Word 96 / @180):
+--    * El vector en 0x08 redirige la ejecución a la dirección @180.
+--    * Paso A: Se carga en R1 el código de diagnóstico 0x00000AB0 ("Abort").
+--    * Paso B: Se escribe el valor en el puerto de salida (io_output <= 0x00000AB0).
+--    * Paso C: El procesador entra en bucle infinito (BEQ R0, R0, -1).
+--
+-- 4. RESULTADO ESPERADO EN SIMULACIÓN:
+--    * PC_out: Termina bloqueado en la rutina de la Word 96 (@180).
+--    * Bus Salida: Muestra de forma constante el valor 0x00000AB0.
+--    * Integridad: Se impide que el dato desalineado corrompa el registro R1.
+----------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------------
 -- TESTBENCH 4: DATA ABORT 2

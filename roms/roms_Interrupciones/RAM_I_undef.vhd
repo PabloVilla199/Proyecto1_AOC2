@@ -52,6 +52,31 @@ type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
 -- From Word 112(@1C0): UNDEF (code for the UNDEF exception)
 --------------------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------
+-- DIAGNÓSTICO: TESTBENCH 5 - EXCEPCIÓN UNDEF (INSTRUCCIÓN NO RECONOCIDA)
+----------------------------------------------------------------------------------
+-- 1. DETECCIÓN DEL FALLO (Etapa ID):
+--    * PC: 0x00000010 (Word 4 de la RAM_I).
+--    * Instrucción: 0xFFFFFFFF.
+--    * Causa: El Opcode "111111" no pertenece al repertorio de instrucciones (ISA).
+--    * Acción Hardware: La Unidad de Control activa la señal 'undef_id'.
+--
+-- 2. PROTOCOLO (Hardware de Riesgos):
+--    * exception_accepted: Se pone a '1' para iniciar el ciclo de excepción.
+--    * Exception_LR: Almacena la dirección 0x00000010 para identificar el error.
+--    * Flush del Pipeline: Se anulan las etapas IF e ID (valid_i_if/id <= '0').
+--    * Salto al Vector: El PC carga la dirección 0x0000000C (Vector UNDEF).
+--
+-- 3. RUTINA DE SERVICIO (ISR - Word 112 / @1C0):
+--    * El vector en 0x0C redirige la ejecución a la dirección @1C0.
+--    * Paso A: Se carga en R1 el código de diagnóstico 0x0BAD0C0D ("Bad Code").
+--    * Paso B: Se escribe el valor en el puerto de salida (io_output <= 0x0BAD0C0D).
+--    * Paso C: El procesador entra en bucle infinito (BEQ R0, R0, -1).
+--
+-- 4. RESULTADO ESPERADO EN SIMULACIÓN:
+--    * PC_out: Termina bloqueado en la dirección de la Word 114.
+--    * Bus Salida: Muestra de forma constante el valor 0x0BAD0C0D.
+--    * Seguridad: Se evita que el procesador ejecute basura tras el fallo.
 
 --------------------------------------------------------------------------------------------------------------------------------
 -- TESTBENCH 5: UNDEF

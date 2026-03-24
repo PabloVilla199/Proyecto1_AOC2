@@ -1,5 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Company: Univesidad de Zaragoza
+-- Engineer: Javier Resano/Jose Luis Briz
 -- 
 -- Create Date:    10:38:16 27/12/2024 
 -- Design Name: 
@@ -29,57 +30,54 @@ entity memoriaRAM_I is port (
 		  	RE : in std_logic;		-- read enable		  
 		  	Dout : out std_logic_vector (31 downto 0));
 end memoriaRAM_I;
---------------------------------------------------------------------------------------------------------------------------------
--- TEST MAC_CONTROL: MAC seguida de BEQ (Sin dependencia de datos)
---------------------------------------------------------------------------------------------------------------------------------
--- RESULTADO ESPERADO EN SIMULACIÓN:
---
--- 1. STALL MULTICICLO:
---    - Cuando la MAC (Word 8) entra en EX, 'alu_ready' baja a '0'.
---    - El BEQ (Word 9) llega a la etapa ID y se queda ahí bloqueado por 'stall_mips' durante 3 ciclos.
---
--- 2. GESTIÓN DEL SALTO:
---    - Aunque el BEQ determine que debe saltar (R0 siempre es igual a R0), el PC no puede cargarse 
---      con la dirección de destino hasta que 'alu_ready' vuelva a '1'.
---
--- 3. FLUJO DEL PIPELINE:
---    - Tras los 3 ciclos de stall, la MAC pasa a MEM/WB.
---    - El BEQ se ejecuta, pone 'salto_tomado = 1' y el PC salta a la Word 64 (0x100).
---    - La instrucción en Word 10 debe ser eliminada (Kill_IF) por el salto.
---------------------------------------------------------------------------------------------------------------------------------
+
+--************************************************************************************************************
+-- Instruction memory file loaded with various tests.
+-- IMPORTANT: There can only be one uncommented test. 
+-- To run a test, uncomment it, and comment on the rest.
+--************************************************************************************************************
 
 architecture Behavioral of memoriaRAM_I is
 type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
+--------------------------------------------------------------------------------------------------------------------------------
+-- Instruction Memory Map
+-- From Word 0 to 3: Exception Vector Table: (@ of the exception routines)
+-- 		@0: reset
+-- 		@4: IRQ
+-- 		@8: Data Abort
+-- 		@C: UNDEF
+-- From Word 4  (@010): .CODE (code of the application to execute)
+-- From Word 64 (@100): RTI (code for the IRQ)
+-- From Word 96 (@180): Data abort (code for the Data Abort exception)
+-- From Word 112(@1C0): UNDEF (code for the UNDEF exception)
+--------------------------------------------------------------------------------------------------------------------------------
 
-signal RAM : RamType := (
-    -- [Word 0-3] Tabla de Vectores
-    0  => X"10210003", -- @00: Reset -> Salto a @10
-    1  => X"1000FFFF", -- @04: IRQ
-    2  => X"1000FFFF", -- @08: Abort
-    3  => X"1000FFFF", -- @0C: UNDEF
 
-    -- [Word 4-7] Preparación
-    4  => X"08010020", -- LW R1, 32(R0)
-    5  => X"08020030", -- LW R2, 48(R0)
-    6  => X"00000000", -- NOP
-    7  => X"00000000", -- NOP
-
-    -- [Word 8] MAC_INI
-    8  => X"04225005", -- MAC_INI R10, R1, R2 
-
-    -- [Word 9] BEQ R0, R0, Destino (Salto a la Word 64 / 0x100)
-    -- Op(000100) rs(0) rt(0) imm(X"0036" -> 54 words de salto desde PC+4)
-    9  => X"10000036", 
-
-    -- [Word 10] Instrucción que NO debe ejecutarse (si el salto funciona)
-    10 => X"05406000", -- ADD R12, R10, R0 (Fwd desde MEM)
-
-    -- [Word 64] Destino del Salto (@0x100)
-    64 => X"05406000", -- ADD R12, R10, R0 (Ejecutada tras el salto)
-    65 => X"1000FFFF", -- Bucle final
-    
-    others => X"00000000"
-);
+--------------------------------------------------------------------------------------------------------------------------------
+-- TESTBENCH 5: UNDEF
+-- Instruction with incorrect code: FFFFFFFF = ¿?
+-- Produces an UNDEF and the execution jumps to word 112 which outputs the code 0x0BAD0C0D and enters an infinite loop: 1000FFFF = BEQ r0,r0,-1
+-- There is an RTE after the loop which, if everything is well managed, will never be executed.
+--------------------------------------------------------------------------------------------------------------------------------
+signal RAM : RamType := (  		X"10210003", X"1021003E", X"1021005D", X"1021006C", X"FFFFFFFF", X"00000000", X"00000000", X"00000000", --word 0,1,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 8,9,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 16,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 24,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 32,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 40,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 48,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 56,...
+									X"0FE10000", X"0FE20004", X"08C10008", X"07E1F800", X"08C2000C", X"08C10004", X"04221000", X"0CC27004", --word 64,...
+									X"0CC2000C", X"0CC17008", X"08C10008", X"07E1F801", X"0BE10000", X"0BE20004", X"00000000", X"08C17FFF",--word 72,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 80,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 88,...
+									X"08C10014", X"0CC17004", X"1000FFFF", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 96,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 104,...
+									X"08C1001C", X"0CC17004", X"1000FFFF", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 112,...
+									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000");--word 120,...
+									
+-----------------------------------------------------------------------------------------------------------------------------
+ 																																		
 signal dir_7:  std_logic_vector(6 downto 0); 
 begin
  

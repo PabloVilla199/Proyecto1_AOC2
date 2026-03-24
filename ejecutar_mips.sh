@@ -67,10 +67,12 @@ show_menu() {
             echo -e "${YELLOW}>> Opciones Basicas:${NC}"
             echo "  1) Delayed System       (Basico)"
             echo "  2) Delayed MAC          (Multiplicacion MC)"
+            echo "  3) Not delayed system      (Basico sin delay slot)"
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="delayed_system" ;;
                 2) TEST_NAME="delayed_mac" ;;
+                3) TEST_NAME="not_delayed_system" ;;
                 *) TEST_NAME="" ;;
             esac
             ;;
@@ -128,11 +130,13 @@ show_menu() {
             echo "  1) Test Forwarding       (Test de forwarding MEM->EX)"
             echo "  2) Test Prioridad Forwarding (Test de prioridad MEM sobre WB)"
             echo "  3) Test Forwarding JAL     (Test de forwarding JAL)"
+            echo "  4) Test Forwarding Store   (Test de forwarding para store)"
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="test_forwarding" ;;
                 2) TEST_NAME="test_forwarding_prioridad" ;;
                 3) TEST_NAME="test_forwarding_jal" ;;
+                4) TEST_NAME="test_forwarding_store" ;;
                 
             esac
             ;;
@@ -161,6 +165,7 @@ show_menu() {
 normalize_test_name() {
     case "$1" in
         delayed_system|system) echo "delayed_system" ;;
+        not_delayed_system|not_delayed|no_delay) echo "not_delayed_system" ;;
         delayed_mac|mac) echo "delayed_mac" ;;
         irq) echo "irq" ;;
         data_abort_unaligned|abort1) echo "data_abort_unaligned" ;;
@@ -177,6 +182,7 @@ normalize_test_name() {
         test_forwarding|forwarding) echo "test_forwarding" ;;
         test_forwarding_prioridad|forwarding_prioridad) echo "test_forwarding_prioridad" ;;
         test_forwarding_jal|forwarding_jal) echo "test_forwarding_jal" ;;
+        test_forwarding_store|forwarding_store) echo "test_forwarding_store" ;;
         test_mac|mac_multiciclo) echo "mac_multiciclo" ;;
         test_mac_raw|mac_raw) echo "mac_raw" ;;
         test_mac_beq|mac_beq) echo "mac_beq" ;;
@@ -188,6 +194,7 @@ normalize_test_name() {
 ram_i_file_for_test() {
     case "$1" in
         delayed_system) echo "${ROMS_DIR}/RAM_I_delayed_system.vhd" ;;
+        not_delayed_system) echo "${ROMS_DIR}/RAM_I_not_delayed_system.vhd" ;;
         delayed_mac) echo "${ROMS_DIR}/RAM_I_delayed_mac.vhd" ;;
         irq) echo "${ROMS_DIR}/roms_Interrupciones/RAM_I_irq.vhd" ;;
         data_abort_unaligned) echo "${ROMS_DIR}/roms_Interrupciones/RAM_I_data_abort_unaligned.vhd" ;;
@@ -207,6 +214,8 @@ ram_i_file_for_test() {
         test_mac|mac_multiciclo) echo "${ROMS_DIR}/room_MAC/RAM_MAC.vhd" ;;
         test_mac_raw|mac_raw) echo "${ROMS_DIR}/room_MAC/RAM_MAC_RAW.vhd" ;;
         test_mac_beq|mac_beq) echo "${ROMS_DIR}/room_MAC/RAM_MAC_BEQ.vhd" ;;
+        test_forwarding_store|forwarding_store) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_store.vhd" ;;
+    
 
         *) echo "" ;;
     esac
@@ -214,7 +223,7 @@ ram_i_file_for_test() {
 
 data_ram_file_for_test() {
     case "$1" in
-        delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo|mac_raw|mac_beq) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
+        delayed_system|not_delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo|mac_raw|mac_beq|test_forwarding_store) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
         *) echo "" ;;
     esac
@@ -350,6 +359,8 @@ if [ "$TEST_NAME_NORMALIZED" = "all" ]; then
     run_test_flow "mac_multiciclo"
     run_test_flow "mac_raw"
     run_test_flow "mac_beq"
+    run_test_flow "test_forwarding_store"
+    run_test_flow "not_delayed_system"
 else
     run_test_flow "$TEST_NAME_NORMALIZED"
 fi
