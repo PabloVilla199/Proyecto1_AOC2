@@ -51,7 +51,34 @@ type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
 -- From Word 96 (@180): Data abort (code for the Data Abort exception)
 -- From Word 112(@1C0): UNDEF (code for the UNDEF exception)
 --------------------------------------------------------------------------------------------------------------------------------
-
+----------------------------------------------------------------------------------
+-- DIAGNÓSTICO TÉCNICO: TESTBENCH 3 - DATA ABORT 1 (DESALINEACIÓN CRÍTICA)
+----------------------------------------------------------------------------------
+-- 1. DETECCIÓN DEL FALLO (Etapa MEM):
+--    * PC: 0x00000010 (Word 4 de la RAM_I).
+--    * Instrucción: 0x08010003 (LW R1, 3(R0)).
+--    * Causa: Intento de lectura en dirección 3. En MIPS, las cargas de 32 bits (LW)
+--             DEBEN ser múltiplos de 4 (alineación de palabra).
+--    * Acción Hardware: El hardware de la etapa MEM detecta que los bits bajos de 
+--                       la dirección no son '00' y levanta 'data_abort'.
+--
+-- 2. RESPUESTA DEL PIPELINE (Logs @80ns):
+--    * @80ns: Se observa un intento de escritura de un valor erróneo en R1.
+--    * Reacción: El hardware invalida las instrucciones en ejecución (Flush) y 
+--                salva el PC de retorno en el LR de excepciones.
+--    * Salto: El PC se redirige al vector 0x08 y de ahí a la Word 96 (@180).
+--
+-- 3. RUTINA DE TRATAMIENTO (ISR - Word 96 / @180):
+--    * @140ns: escritura de '2736' (0x00000AB0) en R1.
+--    * Significado: El procesador ha llegado con éxito a la rutina de error.
+--    * Acción Final: Entrada en bucle infinito (BEQ r0, r0, -1) para evitar
+--                    la propagación de datos corruptos por el sistema.
+--
+-- 4. VERIFICACIÓN EN GTKWAVE:
+--    * PC_out: Salta de 0x14 a 0x08 y finalmente se estabiliza en la zona @180.
+--    * Señal 'exception_accepted': se muestra un pulso en el ciclo del error.
+--    * Bits de Validez: Caen a '0' para limpiar el pipeline tras el fallo.
+----------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------------
 -- TESTBENCH 3: DATA ABORT 1

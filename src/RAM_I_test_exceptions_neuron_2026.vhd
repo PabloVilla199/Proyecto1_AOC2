@@ -1,96 +1,73 @@
 ----------------------------------------------------------------------------------
--- Company: Univesidad de Zaragoza
--- Engineer: Javier Resano/Jose Luis Briz
--- 
--- Create Date:    10:38:16 27/12/2024 
--- Design Name: 
--- Module Name:    memoriaRAM_I - Behavioral 
-
--- Revision 0.01 - File Created
--- Additional Comments: 
---
+-- RAM_I_test_rte.vhd
+-- Test especifico de RTE (return from exception)
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.std_logic_unsigned.all;
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-
-entity memoriaRAM_I is port (
-		  	CLK : in std_logic;
-		  	ADDR : in std_logic_vector (31 downto 0); --Dir 
-        	Din : in std_logic_vector (31 downto 0);--entrada de datos para el puerto de escritura
-        	WE : in std_logic;		-- write enable	
-		  	RE : in std_logic;		-- read enable		  
-		  	Dout : out std_logic_vector (31 downto 0));
+entity memoriaRAM_I is
+    port (
+        CLK  : in  std_logic;
+        ADDR : in  std_logic_vector(31 downto 0);
+        Din  : in  std_logic_vector(31 downto 0);
+        WE   : in  std_logic;
+        RE   : in  std_logic;
+        Dout : out std_logic_vector(31 downto 0)
+    );
 end memoriaRAM_I;
 
---************************************************************************************************************
--- Instruction memory file loaded with various tests.
--- IMPORTANT: There can only be one uncommented test. 
--- To run a test, uncomment it, and comment on the rest.
---************************************************************************************************************
-
 architecture Behavioral of memoriaRAM_I is
-type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
---------------------------------------------------------------------------------------------------------------------------------
--- Instruction Memory Map
--- From Word 0 to 3: Exception Vector Table: (@ of the exception routines)
--- 		@0: reset
--- 		@4: IRQ
--- 		@8: Data Abort
--- 		@C: UNDEF
--- From Word 4  (@010): .CODE (code of the application to execute)
--- From Word 64 (@100): RTI (code for the IRQ)
--- From Word 96 (@180): Data abort (code for the Data Abort exception)
--- From Word 112(@1C0): UNDEF (code for the UNDEF exception)
---------------------------------------------------------------------------------------------------------------------------------
+    type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
 
+    -- Flujo minimo para verificar RTE por IRQ (formato secuencial con NOPs):
+    -- 0x000 reset: salta al main en 0x010
+    -- 0x004 vector IRQ: salta al handler en 0x100
+    -- main: lw, nops, sw, loop
+    -- handler IRQ: nops, rte, nop, loop de seguridad
+    -- Memoria de instrucciones optimizada para test de RTE con instrucciones ADD
+    
+    signal RAM : RamType := (
+        -- VECTOR TABLE (@000)
+        0 => X"10210003", -- Word 0: Reset -> Salta a @010
+        1 => X"1021003E", -- Word 1: IRQ   -> Salta a @100 (Handler)
+        2 => X"1000FFFF", -- Word 2: Bucle error
+        3 => X"1000FFFF", -- Word 3: Bucle error
+        
+        -- .CODE PRINCIPAL (@010 / Word 4)
+        4 => X"20020001", -- ADDI R2, R0, 1  -> R2 = 1 (Nuestro sumando fijo)
+        5 => X"20010000", -- ADDI R1, R0, 0  -> R1 = 0 (Nuestro acumulador)
+        
+        -- BUCLE DE SUMAS (Aquí es donde queremos que caiga la IRQ)
+        6 => X"00220820", -- ADD R1, R1, R2  -> R1 = R1 + R2 (Instrucción ADD pura)
+        7 => X"00220820", -- ADD R1, R1, R2
+        8 => X"00220820", -- ADD R1, R1, R2
+        9 => X"0C010008", -- SW R1, 8(R0)    -> Guarda en RAM para ver actividad
+        10=> X"1000FFFB", -- BEQ R0, R0, -5  -> Salta atrás al primer ADD (Word 6)
+        
+        -- Word 64 (@100): RUTINA DE INTERRUPCIÓN (ISR)
+        64 => X"00000000", -- NOP
+        65 => X"00000000", -- NOP
+        66 => X"20000000", -- RTE (Retorno al bucle de ADDs)
+        67 => X"1000FFFF", -- Bucle de seguridad
+        
+        others => X"00000000"
+    );
 
---------------------------------------------------------------------------------------------------------------------------------
--- TESTBENCH 5: UNDEF
--- Instruction with incorrect code: FFFFFFFF = ¿?
--- Produces an UNDEF and the execution jumps to word 112 which outputs the code 0x0BAD0C0D and enters an infinite loop: 1000FFFF = BEQ r0,r0,-1
--- There is an RTE after the loop which, if everything is well managed, will never be executed.
---------------------------------------------------------------------------------------------------------------------------------
-signal RAM : RamType := (  		X"10210003", X"1021003E", X"1021005D", X"1021006C", X"FFFFFFFF", X"00000000", X"00000000", X"00000000", --word 0,1,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 8,9,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 16,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 24,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 32,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 40,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 48,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 56,...
-									X"0FE10000", X"0FE20004", X"08C10008", X"07E1F800", X"08C2000C", X"08C10004", X"04221000", X"0CC27004", --word 64,...
-									X"0CC2000C", X"0CC17008", X"08C10008", X"07E1F801", X"0BE10000", X"0BE20004", X"00000000", X"08C17FFF",--word 72,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 80,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 88,...
-									X"08C10014", X"0CC17004", X"1000FFFF", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 96,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 104,...
-									X"08C1001C", X"0CC17004", X"1000FFFF", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", --word 112,...
-									X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000", X"00000000");--word 120,...
-									
------------------------------------------------------------------------------------------------------------------------------
- 																																		
-signal dir_7:  std_logic_vector(6 downto 0); 
+    signal dir_7 : std_logic_vector(6 downto 0);
 begin
- 
- dir_7 <= ADDR(8 downto 2); -- As the memory is 128 words we do not use the full address but only 7 bits. As bytes are addressed, but we give words we do not use the 2 least significant bits.
- process (CLK)
+    dir_7 <= ADDR(8 downto 2);
+
+    process(CLK)
     begin
         if (CLK'event and CLK = '1') then
-            if (WE = '1') then -- It is written only if WE is 1
+            if (WE = '1') then
                 RAM(conv_integer(dir_7)) <= Din;
             end if;
         end if;
     end process;
 
-    Dout <= RAM(conv_integer(dir_7)) when (RE='1') else "00000000000000000000000000000000"; -- It is only read if RE is 1
-
+    Dout <= RAM(conv_integer(dir_7)) when (RE = '1')
+            else X"00000000";
 end Behavioral;
+

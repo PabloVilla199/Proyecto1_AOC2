@@ -56,7 +56,30 @@ begin
         if (CLK'event and CLK = '1') then
             if (WE = '1') and (enable = '1') then
                 RAM(conv_integer(dir_7)) <= Din;
-                report "Simulation time : " & time'IMAGE(now) & ".  Data written: " & integer'image(to_integer(unsigned(Din))) & ", in ADDR = " & integer'image(to_integer(unsigned(ADDR)));
+                
+                -- Reporte Estándar
+                report ">>> [MEM_WRITE] Time: " & time'IMAGE(now) & 
+                       " | Data: " & integer'image(to_integer(unsigned(Din))) & 
+                       " | Addr: " & integer'image(to_integer(unsigned(ADDR)));
+
+                -- Reporte Específico para el contador de interrupciones (Word 3 / Addr 12)
+                if (ADDR = x"0000000C") then
+                    report "!!! [EVENTO] El contador Nint ha sido actualizado a: " & 
+                           integer'image(to_integer(unsigned(Din)));
+                end if;
+            end if;
+        end if;
+    end process;
+
+    -- Proceso de Lectura (Para ver qué está consultando el MIPS)
+    process(CLK)
+    begin
+        if (CLK'event and CLK = '1') then
+            if (RE = '1') and (enable = '1') then
+                -- Reporte para cuando el MIPS lee la Word 5 (Fin de test)
+                if (ADDR = x"00000014") then
+                    report "??? [INFO] El MIPS está leyendo el código de finalización (Word 5)";
+                end if;
             end if;
         end if;
     end process;

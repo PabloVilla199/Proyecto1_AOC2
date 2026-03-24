@@ -51,7 +51,34 @@ type RamType is array(0 to 127) of std_logic_vector(31 downto 0);
 -- From Word 96 (@180): Data abort (code for the Data Abort exception)
 -- From Word 112(@1C0): UNDEF (code for the UNDEF exception)
 --------------------------------------------------------------------------------------------------------------------------------
-
+-- ANÁLISIS DE RESULTADOS: IRQ (INTERRUPCIONES Y EXCEPCIONES)
+----------------------------------------------------------------------------------
+-- 1. FLUJO PRINCIPAL:
+--    * El procesador ejecuta un bucle de cálculo en las Words 4-9.
+--    * Se verifica en el log la progresión del registro R1 (8, 16, 32, 64, 128).
+--
+-- 2. GESTIÓN DE IRQ (Interrupción Externa):
+--    * Detección: El hardware activa 'exception_accepted' ante la señal 'ext_irq'.
+--    * Salvaguarda: Se almacena PC=0x24 en Exception_LR y se salta al vector 0x04.
+--    * Servicio (ISR): El procesador ejecuta las Words 64-74, realizando tareas
+--      de mantenimiento y escribiendo en las direcciones de RAM 256 y 260.
+--    * Retorno: La instrucción RTE en la Word 73 restaura el PC.
+--    * Validación: El log confirma que R1 recupera el valor 8, retomando el hilo.
+--
+-- 3. DETECCIÓN DE DATA ABORT (Finalización del Test):
+--    * Causa: Al finalizar la ISR, se ejecuta la instrucción en Word 75:
+--      X"08C17FFF" -> LW R1, 32767(R0).
+--    * Fallo: La dirección 32767 no está alineada (múltiplo de 4), lo que
+--      provoca un Data Abort inmediato en la etapa MEM.
+--    * Acción: El procesador realiza un flush del pipeline y salta al vector 0x08.
+--
+-- 4. ESTADO FINAL DE SEGURIDAD:
+--    * Rutina de Abort: Se ejecuta la Word 96, escribiendo el código de error
+--      0x0AB0 (decimal 2736) en R1 e IO_Output.
+--    * Bloqueo: El sistema entra en bucle infinito (BEQ r0, r0, -1) para detener
+--      la ejecución de forma segura. La señal 'exception_accepted' permanece 
+--      en '1' al no existir un RTE tras este error fatal.
+----------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------------
 -- TESTBENCH 3:Test IRQs 
