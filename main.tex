@@ -1,0 +1,526 @@
+\documentclass[12pt,a4paper]{article}
+
+% -------------------------------------------------
+% PAQUETES
+% -------------------------------------------------
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+
+% -------------------------------------------------
+% CONFIGURACIÓN
+% -------------------------------------------------
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+\setstretch{1.15}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{AOC2 - Proyecto 1}
+\fancyhead[R]{Memoria}
+\fancyfoot[C]{\thepage}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    keepspaces=true
+}
+
+% -------------------------------------------------
+% COMANDOS ÚTILES
+% -------------------------------------------------
+\newcommand{\campo}[1]{\textbf{#1}}
+\newcommand{\pendiente}{\textcolor{red}{[Rellenar]}}
+\newcommand{\codigo}[1]{\texttt{#1}}
+
+% -------------------------------------------------
+% DOCUMENTO
+% -------------------------------------------------
+\begin{document}
+
+% -------------------------------------------------
+% PORTADA
+% -------------------------------------------------
+\begin{titlepage}
+    \centering
+
+    {\Large Universidad de Zaragoza \par}
+    \vspace{0.3cm}
+    {\Large EINA \par}
+    \vspace{1.2cm}
+
+    {\Huge \textbf{AOC2} \par}
+    \vspace{0.5cm}
+    {\LARGE Proyecto 1 \par}
+    \vspace{0.3cm}
+    {\Large Gestión de riesgos, excepciones y ALU multiciclo en MIPS \par}
+
+    \vfill
+
+    \begin{flushleft}
+        \campo{Apellidos y nombre:} Tahir Berga Celma-Pablo Villa Camañes \\[0.3cm]
+        \campo{Fecha:} \pendiente
+    \end{flushleft}
+
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% -------------------------------------------------
+\section{Breve resumen}
+% -------------------------------------------------
+
+Redactar aquí un resumen general del trabajo realizado.
+La plantilla nueva indica una extensión orientativa de unas 200 palabras.
+
+\vspace{0.5cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\section{Verificación de los requisitos funcionales}
+% -------------------------------------------------
+
+En cada requisito funcional conviene incluir:
+\begin{itemize}[leftmargin=1.2cm]
+    \item breve título indicando el objetivo del programa de prueba o testbench,
+    \item código ensamblador representativo,
+    \item nombre de los ficheros RAM usados en la entrega,
+    \item comentario del test,
+    \item cronograma y/o captura del waveform si ayuda a justificar el comportamiento.
+\end{itemize}
+
+% -------------------------------------------------
+\subsection{RF1 -- JAL y RET}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+Incluir las instrucciones \codigo{jal} y \codigo{ret} ya trabajadas en prácticas en el MIPS del proyecto.
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente:
+\begin{itemize}[leftmargin=1.2cm]
+    \item los cambios realizados en el MIPS,
+    \item cómo se calcula la dirección de salto,
+    \item cómo se guarda la dirección de retorno,
+    \item qué señales de control se activan,
+    \item y cómo se actualiza el PC.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+Comprobar su correcto funcionamiento en un banco de pruebas.
+
+\paragraph{Título del test:} \pendiente
+
+\paragraph{Ficheros RAM usados:}
+\begin{itemize}[leftmargin=1.2cm]
+    \item RAM de instrucciones: \pendiente
+    \item RAM de datos: \pendiente
+\end{itemize}
+
+\paragraph{Código ensamblador representativo}
+\begin{lstlisting}
+# Pegar aquí el código del test de jal / ret
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Explicar qué se comprueba y por qué demuestra el funcionamiento correcto.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\subsection{RF2 -- Anticipación de operandos}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+El procesador es capaz de anticipar los operandos para las instrucciones \codigo{lw}, \codigo{sw} y aritméticas a distancia 1
+(siempre que el dato a anticipar no venga de un \codigo{lw}) y a distancia 2.
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente la gestión de anticipación de operandos:
+\begin{itemize}[leftmargin=1.2cm]
+    \item dónde está la unidad de forwarding,
+    \item qué señales observa,
+    \item qué multiplexores controla,
+    \item qué casos se contemplan para \codigo{rs} y \codigo{rt}.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+En la plantilla nueva se citan ejemplos del banco de pruebas \codigo{test\_IRQ}, como:
+\begin{itemize}[leftmargin=1.2cm]
+    \item de \codigo{LW R1, 8(R0)} a \codigo{ADD R31, R1, R31}: anticipación de \codigo{rs} a distancia 2,
+    \item de \codigo{SUB R31, R31, R1} a \codigo{LW R1, 0(R31)}: anticipación de \codigo{rs} a distancia 1,
+    \item de \codigo{ADD R2, R1, R2} a \codigo{SW R2, 7008(R6)}.
+\end{itemize}
+
+\paragraph{Código ensamblador representativo}
+\begin{lstlisting}
+# Pegar aquí casos representativos de forwarding
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Completar con otros casos representativos y explicar por qué el valor correcto llega sin parada cuando procede.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\subsection{RF3 -- Riesgos de datos}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+El procesador es capaz de detener la ejecución para evitar los riesgos causados por dependencias en instrucciones \codigo{lw}-uso
+(distancia 1), \codigo{beq} o WRO (distancias 1 o 2).
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente la gestión de detenciones:
+\begin{itemize}[leftmargin=1.2cm]
+    \item señales usadas por la unidad de detección,
+    \item instrucciones que obligan a detener,
+    \item detención de IF/ID,
+    \item invalidación hacia EX.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+En la plantilla nueva se citan estos casos en \codigo{test\_IRQ}:
+\begin{itemize}[leftmargin=1.2cm]
+    \item \textbf{Test 1:} 1 ciclo de detención por dependencia a distancia 2 entre \codigo{ADD R1, R1, R1} y \codigo{beq R1, R1, main},
+    \item \textbf{Test 2:} 1 ciclo de detención por dependencia \codigo{lw}-uso, por ejemplo entre \codigo{LW R1, 8(R0)} y \codigo{SW R1, 7004(R6)},
+    \item \textbf{Test 3:} no se para entre \codigo{SW R1, 7004(R6)} y \codigo{ADD R1, R1, R1}.
+\end{itemize}
+
+\paragraph{Código ensamblador representativo}
+\begin{lstlisting}
+# Pegar aquí pruebas de riesgos de datos
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Completar con otros casos representativos e indicar cuántos ciclos de parada aparecen y por qué.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\subsection{RF4 -- Riesgos de control}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+El procesador es capaz de eliminar los riesgos de control causados por las instrucciones de salto: \codigo{beq} y \codigo{rte}.
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente:
+\begin{itemize}[leftmargin=1.2cm]
+    \item cómo se gestiona el PC,
+    \item cuándo se anulan instrucciones,
+    \item qué señales de control intervienen.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+En el banco de pruebas \codigo{test\_IRQ} se verifican varios saltos tomados en los que sólo se ejecutan las instrucciones correctas:
+\begin{itemize}[leftmargin=1.2cm]
+    \item \codigo{beq R1, R1, main},
+    \item \codigo{rte},
+    \item un ejemplo en el que no se salta,
+    \item verificar también \codigo{jal} y \codigo{ret}.
+\end{itemize}
+
+\paragraph{Código ensamblador representativo}
+\begin{lstlisting}
+# Pegar aquí pruebas de riesgos de control
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Indicar qué instrucciones se anulan y cuáles llegan a ejecutarse realmente.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\subsection{RF5 -- Riesgos estructurales}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+El procesador es capaz de detener la ejecución para evitar riesgos estructurales causados por las instrucciones \codigo{mac} y \codigo{mac\_ini}.
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente la gestión de riesgos estructurales:
+\begin{itemize}[leftmargin=1.2cm]
+    \item qué etapas se detienen,
+    \item qué señal de control se emplea,
+    \item cómo se coordina con el resto de detenciones.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+En el banco de pruebas \codigo{testbench\_2} se ejecutan varias instrucciones \codigo{mac} y \codigo{mac\_ini}, incluyendo:
+\begin{itemize}[leftmargin=1.2cm]
+    \item \codigo{mac\_ini R10, R1, R5},
+    \item \codigo{mac R10, R2, R6}.
+\end{itemize}
+
+\paragraph{Código ensamblador representativo}
+\begin{lstlisting}
+# Pegar aquí test de riesgos estructurales con MAC / MAC_ini
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Explicar la detención estructural y el resultado final.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\subsection{RF6 -- Cambio a modo excepción}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+Si el procesador está en modo usuario y recibe \codigo{IRQ}, \codigo{ABORT} o \codigo{UNDEF}, pasa al modo correspondiente y ejecuta la rutina que indica la tabla de vectores de excepción.
+Si está en modo excepción, ignora nuevas señales hasta volver a modo usuario.
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente la gestión del PC al aceptar la excepción:
+\begin{itemize}[leftmargin=1.2cm]
+    \item detección de \codigo{IRQ}, \codigo{ABORT} y \codigo{UNDEF},
+    \item selección de rutina,
+    \item actualización de PC,
+    \item cambio de modo.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+
+\paragraph{IRQ}
+Banco de pruebas \codigo{test\_IRQ} con diversas IRQs. Se atienden si y sólo si el procesador está en modo usuario.
+
+\begin{lstlisting}
+# Pegar aquí test de IRQ
+\end{lstlisting}
+
+\paragraph{Data Abort}
+En la memoria de instrucciones se incluyen pruebas con:
+\begin{itemize}[leftmargin=1.2cm]
+    \item acceso no alineado,
+    \item acceso a dirección fuera de rango.
+\end{itemize}
+En ambos casos la ejecución salta a la rutina Data Abort.
+
+\begin{lstlisting}
+# Pegar aquí test de Data Abort
+\end{lstlisting}
+
+\paragraph{Undef}
+Se ejecuta una instrucción con código de operación desconocido y la ejecución salta a la rutina UNDEF.
+
+\begin{lstlisting}
+# Pegar aquí test de instrucción indefinida
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Explicar cómo se observa en simulación la entrada al modo excepción y la rutina ejecutada.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\subsection{RF7 -- Retorno a modo usuario con RTE}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+Al terminar la excepción se vuelve a la ejecución original con la instrucción \codigo{rte}.
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente:
+\begin{itemize}[leftmargin=1.2cm]
+    \item cómo se restaura el PC,
+    \item cómo se vuelve a modo usuario,
+    \item cómo se conserva el contexto,
+    \item cómo se usa el esquema de prólogo/epílogo.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+Sólo es necesario verificarlo para las IRQs. El código debe funcionar aunque se interrumpa repetidas veces.
+En \codigo{test\_IRQ} se comprueba que se retorna a la ejecución sin alterarla siempre que se guarden y restauren registros en pila, usando \codigo{R31} como SP.
+
+\begin{lstlisting}
+# Pegar aquí test de retorno con rte
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Describir cómo se comprueba que el programa continúa correctamente tras la interrupción.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\subsection{RF8 -- ALU multiciclo}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+El procesador es capaz de ejecutar las instrucciones \codigo{mac} y \codigo{mac\_ini} en 3 ciclos y gestionar el estado del registro \codigo{ACC} ante el tratamiento de excepciones.
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente la máquina de estados diseñada:
+\begin{itemize}[leftmargin=1.2cm]
+    \item estados,
+    \item entradas y salidas de cada estado,
+    \item número de ciclos,
+    \item gestión hardware o software del registro \codigo{ACC} al tratar excepciones.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+El banco de pruebas \codigo{testbench\_2} incluye varias instrucciones \codigo{mac} y \codigo{mac\_ini}.
+
+Además, conviene diseñar un banco de pruebas donde tanto la función principal como la RTI empleen instrucciones MAC y verificar el estado del registro \codigo{ACC}.
+
+\begin{lstlisting}
+# Pegar aquí test de ALU multiciclo / MAC
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Explicar el funcionamiento en 3 ciclos y el tratamiento del registro \codigo{ACC}.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\subsection{RF9 -- Contadores}
+% -------------------------------------------------
+
+\subsubsection*{Descripción}
+Los contadores dan información de la ejecución del código.
+
+\subsubsection*{¿Cómo?}
+Explicar brevemente la gestión de los contadores:
+\begin{itemize}[leftmargin=1.2cm]
+    \item cuándo incrementa cada contador,
+    \item qué señales los habilitan,
+    \item cómo se evita contar una parada varias veces,
+    \item jerarquía entre causas de parada.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+\subsubsection*{Verificación}
+En el banco de pruebas \codigo{test\_IRQ} se ha comprobado que:
+\begin{itemize}[leftmargin=1.2cm]
+    \item \codigo{Ins} incrementa por cada instrucción válida que hace WB,
+    \item \codigo{Data\_stalls} contabiliza los ciclos debidos a riesgos de datos,
+    \item \codigo{Control\_stalls} incrementa un ciclo por salto tomado,
+    \item \codigo{Exception\_accepted} contabiliza las excepciones aceptadas,
+    \item \codigo{Memory\_stalls} incrementa cuando memoria no está \codigo{ready}.
+\end{itemize}
+
+\paragraph{Jerarquía de paradas}
+Importante: las paradas deben incrementar sólo un contador.
+Si hay varios motivos, se cuenta el de mayor jerarquía:
+\[
+\texttt{memory stall} > \texttt{data stall} > \texttt{control stall}
+\]
+
+\begin{lstlisting}
+# Pegar aquí programa o test para verificar contadores
+\end{lstlisting}
+
+\paragraph{Comentario del test}
+Explicar la relación entre el comportamiento observado y los valores leídos en los contadores.
+
+\vspace{0.3cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\section{Cuantificación de horas dedicadas}
+% -------------------------------------------------
+
+Indicar horas por tarea (y persona en el caso de parejas).
+
+\begin{center}
+\begin{tabular}{p{9cm}c}
+\toprule
+\textbf{Tarea} & \textbf{Horas} \\
+\midrule
+Estudio del MIPS, VHDL, entorno, instalación\ldots & \pendiente \\
+Adición de las nuevas instrucciones & \pendiente \\
+Gestión de excepciones & \pendiente \\
+Gestión de riesgos & \pendiente \\
+Depuración, verificación y programas de prueba & \pendiente \\
+Memoria & \pendiente \\
+\midrule
+\textbf{Total} & \pendiente \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -------------------------------------------------
+\section{Conclusiones y autoevaluación}
+% -------------------------------------------------
+
+Responder aquí a cuestiones como:
+\begin{itemize}[leftmargin=1.2cm]
+    \item ¿Para qué ha servido vuestro trabajo?
+    \item ¿Qué os ha parecido?
+    \item ¿Qué calificación os otorgáis a vosotros mismos?
+\end{itemize}
+
+\vspace{0.5cm}
+\noindent\pendiente
+
+% -------------------------------------------------
+\section{Agradecimientos}
+% -------------------------------------------------
+
+¿Os ha ayudado algún compañer@? Podéis indicarlo aquí.
+
+\vspace{0.5cm}
+\noindent\pendiente
+
+\end{document}

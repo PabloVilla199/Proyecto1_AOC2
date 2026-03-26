@@ -41,9 +41,11 @@ show_help() {
     echo "  13) test_jal_ud (UD)     -> room_UD/RAM_test_jal_ud + RAM_D_default"
     echo "  14) test_forwarding (UA) -> roms_UA/RAM_UA_fwd + RAM_D_default"
     echo "  15) test_forwarding_prioridad (UA) -> roms_UA/RAM_UA_fwd_prioridad + RAM_D_default"
-    echo "  14) all                  -> Ejecuta todos los tests anteriores (1 al 13 )"
+    echo "  16) mac_overflow         -> room_MAC/RAM_MAC_OVERFLOW + RAM_D_default"
+    echo "  17) test_jal_nested      -> room_jal_ret/RAM_JAL_NESTED + RAM_D_default"
+    echo "  all                      -> Ejecuta todos los tests anteriores"
     echo ""
-    echo "Aliases compatibles: jal -> test_jal, ret -> test_ret, rte -> test_rte, beq -> test_beq, ud -> test_beq, lw -> test_lw"
+    echo "Aliases compatibles: jal -> test_jal, ret -> test_ret, rte -> test_rte, beq -> test_beq, ud -> test_beq, lw -> test_lw, overflow -> mac_overflow"
     echo ""
     echo "Opciones:"
     echo "  --view             Abre GTKWave al final"
@@ -99,10 +101,12 @@ show_menu() {
             echo -e "${YELLOW}>> Pruebas Data Path (Saltos):${NC}"
             echo "  1) Test JAL             (Data Path jal)"
             echo "  2) Test RET             (Data Path ret)"
+            echo "  3) Test JAL_NESTED      (Anidamiento con Pila)"
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="test_jal" ;;
                 2) TEST_NAME="test_ret" ;;
+                3) TEST_NAME="test_jal_nested" ;;
                 *) TEST_NAME="" ;;
             esac
             ;;
@@ -146,12 +150,13 @@ show_menu() {
             echo "  1) MAC multiciclo          (Multiplicacion MC)"
             echo "  2) MAC depdencias RAW "
             echo "  3) MAC y despues BEQ "
+            echo "  4) MAC overflow y signos   (Test de extremos)"
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="mac_multiciclo" ;;
                 2) TEST_NAME="mac_raw" ;;
                 3) TEST_NAME="mac_beq" ;;
-
+                4) TEST_NAME="mac_overflow" ;;
                 *) TEST_NAME="" ;;
             esac
             ;;
@@ -186,6 +191,8 @@ normalize_test_name() {
         test_mac|mac_multiciclo) echo "mac_multiciclo" ;;
         test_mac_raw|mac_raw) echo "mac_raw" ;;
         test_mac_beq|mac_beq) echo "mac_beq" ;;
+        test_jal_nested|jal_nested) echo "test_jal_nested" ;;
+        mac_overflow|overflow) echo "mac_overflow" ;;
         all|todos) echo "all" ;;
         *) echo "" ;;
     esac
@@ -215,7 +222,8 @@ ram_i_file_for_test() {
         test_mac_raw|mac_raw) echo "${ROMS_DIR}/room_MAC/RAM_MAC_RAW.vhd" ;;
         test_mac_beq|mac_beq) echo "${ROMS_DIR}/room_MAC/RAM_MAC_BEQ.vhd" ;;
         test_forwarding_store|forwarding_store) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_store.vhd" ;;
-    
+        test_jal_nested) echo "${ROMS_DIR}/room_jal_ret/RAM_JAL_NESTED.vhd" ;;
+        mac_overflow) echo "${ROMS_DIR}/room_MAC/RAM_MAC_OVERFLOW.vhd" ;;
 
         *) echo "" ;;
     esac
@@ -223,7 +231,7 @@ ram_i_file_for_test() {
 
 data_ram_file_for_test() {
     case "$1" in
-        delayed_system|not_delayed_system|delayed_mac|test_jal|test_ret|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo|mac_raw|mac_beq|test_forwarding_store) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
+        delayed_system|not_delayed_system|delayed_mac|test_jal|test_ret|test_jal_nested|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo|mac_raw|mac_beq|mac_overflow|test_forwarding_store) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
         *) echo "" ;;
     esac
@@ -359,6 +367,8 @@ if [ "$TEST_NAME_NORMALIZED" = "all" ]; then
     run_test_flow "mac_multiciclo"
     run_test_flow "mac_raw"
     run_test_flow "mac_beq"
+    run_test_flow "mac_overflow"
+    run_test_flow "test_jal_nested"
     run_test_flow "test_forwarding_store"
     run_test_flow "not_delayed_system"
 else
