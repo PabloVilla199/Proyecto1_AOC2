@@ -43,9 +43,10 @@ show_help() {
     echo "  15) test_forwarding_prioridad (UA) -> roms_UA/RAM_UA_fwd_prioridad + RAM_D_default"
     echo "  16) mac_overflow         -> room_MAC/RAM_MAC_OVERFLOW + RAM_D_default"
     echo "  17) test_jal_nested      -> room_jal_ret/RAM_JAL_NESTED + RAM_D_default"
+    echo "  18) test_cpi            -> room_UD/RAM_UD_test_cpi + RAM_D_default"
     echo "  all                      -> Ejecuta todos los tests anteriores"
     echo ""
-    echo "Aliases compatibles: jal -> test_jal, ret -> test_ret, rte -> test_rte, beq -> test_beq, ud -> test_beq, lw -> test_lw, overflow -> mac_overflow"
+    echo "Aliases compatibles: jal -> test_jal, ret -> test_ret, rte -> test_rte, beq -> test_beq, ud -> test_beq, lw -> test_lw, overflow -> mac_overflow, cpi -> test_cpi"
     echo ""
     echo "Opciones:"
     echo "  --view             Abre GTKWave al final"
@@ -118,6 +119,7 @@ show_menu() {
             echo "  3) Test LW uso          (Riesgo Load-Use)"
             echo "  4) Test JAL IF          (Riesgo Jal-Kill_IF)" 
             echo "  5) Test JAL UD          (Riesgo Jal-Use)"
+            echo "  6) Test CPI             (Contadores + CPI)"
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="test_beq" ;;
@@ -125,6 +127,7 @@ show_menu() {
                 3) TEST_NAME="test_lw" ;;
                 4) TEST_NAME="test_jal_if" ;;
                 5) TEST_NAME="test_jal_ud" ;;
+                6) TEST_NAME="test_cpi" ;;
                 *) TEST_NAME="" ;;
             esac
             ;;
@@ -184,6 +187,7 @@ normalize_test_name() {
         test_lw|lw) echo "test_lw" ;;
         test_jal_if|jal_if) echo "test_jal_if" ;;
         test_jal_ud|jal_ud) echo "test_jal_ud" ;;
+        test_cpi|cpi) echo "test_cpi" ;;
         test_forwarding|forwarding) echo "test_forwarding" ;;
         test_forwarding_prioridad|forwarding_prioridad) echo "test_forwarding_prioridad" ;;
         test_forwarding_jal|forwarding_jal) echo "test_forwarding_jal" ;;
@@ -215,6 +219,7 @@ ram_i_file_for_test() {
         test_lw) echo "${ROMS_DIR}/room_UD/RAM_UD_test_lw.vhd" ;;
         test_jal_if) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jal_if.vhd" ;;
         test_jal_ud) echo "${ROMS_DIR}/room_UD/RAM_UD_test_jal_ud.vhd" ;;
+        test_cpi) echo "${ROMS_DIR}/room_UD/RAM_UD_test_cpi.vhd" ;;
         test_forwarding) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd.vhd" ;;
         test_forwarding_prioridad) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_prioridad.vhd" ;;
         test_forwarding_jal) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_jal.vhd" ;;
@@ -231,7 +236,7 @@ ram_i_file_for_test() {
 
 data_ram_file_for_test() {
     case "$1" in
-        delayed_system|not_delayed_system|delayed_mac|test_jal|test_ret|test_jal_nested|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo|mac_raw|mac_beq|mac_overflow|test_forwarding_store) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
+        delayed_system|not_delayed_system|delayed_mac|test_jal|test_ret|test_jal_nested|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_cpi|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo|mac_raw|mac_beq|mac_overflow|test_forwarding_store) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
         *) echo "" ;;
     esac

@@ -1,3 +1,4 @@
+
 \documentclass[12pt,a4paper]{article}
 
 % -------------------------------------------------
@@ -21,6 +22,63 @@
 \usepackage{listings}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
+% Codificación
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+
+% Fuentes Times New Roman en TODO
+\usepackage{newtxtext,newtxmath}
+
+% Márgenes
+\usepackage{geometry}
+\geometry{left=25mm,right=25mm,top=25mm,bottom=25mm}
+
+% Gráficos
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+
+% Ajustar espaciado de figuras
+\setlength{\textfloatsep}{5pt plus 1.0pt minus 2.0pt}
+\setlength{\floatsep}{5pt plus 1.0pt minus 2.0pt}
+\setlength{\intextsep}{8pt plus 1.0pt minus 2.0pt}
+\setlength{\abovecaptionskip}{3pt}
+\setlength{\belowcaptionskip}{2pt}
+
+% Títulos
+\usepackage{titlesec}
+\titleformat{\chapter}[hang]{\LARGE\bfseries\rmfamily\color{black}}{\thechapter.}{1em}{}
+\titleformat{\section}[hang]{\large\bfseries\rmfamily\color{black}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}[hang]{\normalsize\bfseries\rmfamily\color{black}}{\thesubsection.}{0.5em}{}
+\titlespacing*{\chapter}{0pt}{-10pt}{10pt}
+\titlespacing*{\section}{0pt}{10pt}{5pt}
+\titlespacing*{\subsection}{0pt}{8pt}{4pt}
+
+% Párrafos
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+% Encabezados y pies
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Sistemas Legados}
+\fancyhead[R]{2025}
+\fancyfoot[C]{\thepage}
+
+% Hipervínculos
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=black,
+    citecolor=black
+}
+
+% Portada
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
 
 % -------------------------------------------------
 % CONFIGURACIÓN
@@ -66,29 +124,35 @@
 % -------------------------------------------------
 % PORTADA
 % -------------------------------------------------
+
+\begin{document}
+
 \begin{titlepage}
     \centering
+    \vspace*{2cm}
 
-    {\Large Universidad de Zaragoza \par}
-    \vspace{0.3cm}
-    {\Large EINA \par}
-    \vspace{1.2cm}
+    % Logo UNIZAR
+    \includegraphics[width=0.25\textwidth]{logo_unizar.png}\\[1cm]
 
-    {\Huge \textbf{AOC2} \par}
-    \vspace{0.5cm}
-    {\LARGE Proyecto 1 \par}
-    \vspace{0.3cm}
-    {\Large Gestión de riesgos, excepciones y ALU multiciclo en MIPS \par}
+    \textsc{\LARGE Universidad de Zaragoza}\\[0.5cm]
+    \textsc{\Large Asignatura:AOC2 2025-26 (2º curso)}\\[0.5cm]
+
+    \HRule \\[0.3cm]
+    {\Large \bfseries AOC2: Project 1 - Convolutional Neural Network Unit in a
+MIPS-based SoC
+
+\\[0.3cm]
+    \HRule \\[1.5cm]
+
+    
+    \textbf{Autores:}\\[0.3cm]
+    Tahir Berga \\
+    Pablo Villa\\[2cm]
 
     \vfill
-
-    \begin{flushleft}
-        \campo{Apellidos y nombre:} Tahir Berga Celma-Pablo Villa Camañes \\[0.3cm]
-        \campo{Fecha:} \pendiente
-    \end{flushleft}
-
-    \vfill
+    {\large \today}
 \end{titlepage}
+
 
 \tableofcontents
 \newpage
@@ -97,11 +161,16 @@
 \section{Breve resumen}
 % -------------------------------------------------
 
-Redactar aquí un resumen general del trabajo realizado.
-La plantilla nueva indica una extensión orientativa de unas 200 palabras.
+El presente documento detalla el diseño, implementación y verificación en VHDL de un procesador MIPS de 32 bits con arquitectura segmentada de cinco etapas. El objetivo principal del proyecto es dotar al procesador base de la capacidad hardware necesaria para actuar como unidad de procesamiento en Redes Neuronales Convolucionales (CNNs), iterando su diseño para incluir una ALU multiciclo vectorizada, gestión avanzada de riesgos e interrupciones.
 
-\vspace{0.5cm}
-\noindent\pendiente
+En primer lugar, se ha ampliado el repertorio de instrucciones integrando saltos a subrutinas e interrupciones (\textbf{JAL}, \textbf{RET} y \textbf{RTE}). Para preservar el rendimiento, se ha desarrollado una \textbf{Unidad de Anticipación (UA)} que resuelve riesgos de datos (RAW) a distancias 1 y 2 sin penalizar de ciclos. Aquellos riesgos que no son resueltos por anticipación (dependencias \textit{load-use}, o resolución de saltos) son gestionados por la \textbf{Unidad de Detención (UD)}. Esta unidad no solo bloquea el avance del pieline mediante paradas locales (\texttt{stall\_ID}) o globales (\texttt{stall\_MIPS}), sino que también mitiga los \textbf{riesgos de control} anulando instrucciones incorrectamente fetcheadas mediante la señal \texttt{Kill\_IF}, reduciendo la penalización a un único ciclo.
+
+El núcleo aritmético del sistema se ha potenciado rediseñando la operación MAC como un módulo multiciclo gobernado por una FSM de 3 estados, optimizando el camino crítico sin comprometer el rendimiento global, e integrando estrategias para la preservación del registro acumulador (\texttt{ACC}). Simultáneamente, para garantizar la integridad se ha incorporado un \textbf{Gestor de Excepciones} capaz de priorizar y atender eventos asíncronos (IRQ), accesos inválidos a memoria (Data Abort) y excepciones por decodificación errónea (UNDEF), salvaguardando el contexto arquitectónico en el registro \texttt{Exception\_LR}.
+
+Finalmente, se han incluido de unos  \textbf{Contadores de Rendimiento} con jerarquía estricta (priorizando anomalías de memoria sobre datos y control) proporciona instrumentación en tiempo real para la extracción del CPI real del sistema. La robustez y precisión ciclo a ciclo de todo el diseño han sido validadas exhaustivamente mediante bancos de pruebas y análisis de cronogramas en GTKWave.
+
+
+
 
 % -------------------------------------------------
 \section{Verificación de los requisitos funcionales}
@@ -116,390 +185,1536 @@ En cada requisito funcional conviene incluir:
     \item cronograma y/o captura del waveform si ayuda a justificar el comportamiento.
 \end{itemize}
 
+
+
+
 % -------------------------------------------------
+
 \subsection{RF1 -- JAL y RET}
+
 % -------------------------------------------------
 
-\subsubsection*{Descripción}
-Incluir las instrucciones \codigo{jal} y \codigo{ret} ya trabajadas en prácticas en el MIPS del proyecto.
+Para completar el RF1, se ha modificado el datapath habilitando la propagación de PC+4 hasta la etapa WB para permitir el enlace en la instrucción JAL, y se ha creado una ruta directa desde el banco de registros al PC para resolver el salto del RET en la etapa ID. Asimismo, se ha actualizado la Unidad de Control para decodificar los nuevos opcodes y la Unidad de Detención para gestionar los riesgos de control y datos asociados.
 
-\subsubsection*{¿Cómo?}
-Explicar brevemente:
-\begin{itemize}[leftmargin=1.2cm]
-    \item los cambios realizados en el MIPS,
-    \item cómo se calcula la dirección de salto,
-    \item cómo se guarda la dirección de retorno,
-    \item qué señales de control se activan,
-    \item y cómo se actualiza el PC.
+\subsection{Implementación de las instrucciones JAL, RET y RTE}
+
+\subsubsection{Análisis RTL de las nuevas instrucciones}
+
+Para dotar al procesador de capacidad de gestión de subrutinas y retorno de excepciones, se han implementado las siguientes transferencias de registros:
+
+
+
+\begin{itemize}
+
+    \item \textbf{JAL rd, \#inm}: Realiza un salto relativo al PC actual y almacena la dirección de retorno en el registro de destino.
+
+    \begin{itemize}
+
+        \item $Br[rd] \leftarrow PC+4$
+
+        \item $PC \leftarrow PC+4 + (ExtSigno[inm] \times 4)$
+
+    \end{itemize}
+
+    \item \textbf{RET rs}: Salto indirecto a través de registro para retornar de una subrutina.
+
+    \begin{itemize}
+
+        \item $PC \leftarrow Br[rs]$
+
+    \end{itemize}
+
+    \item \textbf{RTE}: Instrucción especial para restaurar el flujo del programa tras una excepción.
+
+    \begin{itemize}
+
+        \item $PC \leftarrow Exception\_LR$
+
+    \end{itemize}
+
 \end{itemize}
 
-\vspace{0.3cm}
-\noindent\pendiente
+
+
+\subsection{Modificaciones en el Datapath}
+
+
+
+\subsubsection{Lógica de Selección del PC (Etapa IF)}
+
+Se ha modificado la entrada del registro PC para utilizar una lógica \texttt{when-else} que prioriza las fuentes de la siguiente dirección según el estado del procesador:
+
+
+
+\begin{itemize}
+
+    \item \textbf{Prioridad Máxima:} Direcciones de vector de excepción ($0x4, 0x8, 0xC$) si   
+
+    {Exception\_accepted} es '1'.
+
+    \item \textbf{Retorno de Excepción:} \texttt{Exception\_LR} si \texttt{RTE\_ID} es '1'.
+
+    \item \textbf{Retorno de Subrutina (RET):} El valor de \texttt{BusA} si \texttt{ret\_ID} es '1'.
+
+    \item \textbf{Saltos (BEQ/JAL):} La dirección calculada \texttt{Dirsalto\_ID} si \texttt{salto\_tomado} es '1'.
+
+    \item \textbf{Flujo Secuencial:} $PC+4$.
+
+\end{itemize}
+
+
+
+\subsubsection{Multiplexor de Escritura en Banco de Registros (Etapa WB)}
+
+Para permitir que  el \textbf{JAL} escriba la dirección de retorno en el banco de registros, se ha expandido el multiplexor de la etapa {Write-Back} (\texttt{MemtoReg}). Ahora, la señal \texttt{JAL\_WB} actúa como un selector de alta prioridad que ignora la señal \texttt{MemtoReg} convencional.
+
+
+
+La siguiente tabla resume la lógica de selección para el dato de escritura (\texttt{BusW}):
+
+
+
+\begin{table}[h]
+
+\centering
+
+\begin{tabular}{|c|c|l|l|}
+
+\hline
+
+\textbf{JAL\_WB} & \textbf{MemtoReg\_WB} & \textbf{Dato Seleccionado (BusW)} & \textbf{Instrucciones Típicas} \\ \hline
+
+1                & X                     & \texttt{PC4\_WB}                  & JAL                            \\ \hline
+
+0                & 0                     & \texttt{ALU\_out\_WB}             & ADD, SUB, AND, MAC         \\ \hline
+
+0                & 1                     & \texttt{MDR} (Memoria)            & LW                             \\ \hline
+
+\end{tabular}
+
+\caption{Lógica de control del multiplexor de escritura en el Banco de Registros.}
+
+\label{tab:mux_wb}
+
+\end{table}
+
+
+
+
+
+
+
+\subsection{Unidad de Control (UC)}
+
+Se han añadido los nuevos {Opcodes}) a la Unidad de Control. La lógica interna activa las señales necesarias para que el \textit{datapath} reaccione correctamente. En el caso de JAL, es fundamental activar \texttt{RegWrite} y \texttt{RegDst} para asegurar que el registro de destino reciba el valor de $PC+4$.
+
+
+
+\begin{table}[h]
+
+\centering
+
+\resizebox{\textwidth}{!}{
+
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
+
+\hline
+
+\textbf{Inst.} & \textbf{Opcode} & \textbf{Branch} & \textbf{RegDst} & \textbf{ALUSrc} & \textbf{MemWr} & \textbf{MemRd} & \textbf{RegWr} & \textbf{JAL} & \textbf{RET} & \textbf{RTE} \\ \hline
+
+\textbf{JAL}   & 000101          & 0               & 1               & 0               & 0              & 0              & 1              & 1            & 0            & 0            \\ \hline
+
+\textbf{RET}   & 000110          & 0               & 0               & 0               & 0              & 0              & 0              & 0            & 1            & 0            \\ \hline
+
+\textbf{RTE}   & 001000          & 0               & 0               & 0               & 0              & 0              & 0              & 0            & 0            & 1            \\ \hline
+
+\end{tabular}
+
+}
+
+\caption{Valores de las señales de control para las instrucciones añadidas.}
+
+\end{table}
+
+\section{Verificación del jal y ret}
+
+
+
+Para validar la correcta implementación de las instrucciones \textbf{JAL} y \textbf{RET}, se han utilizado dos bancos de pruebas específicos del repositorio: \texttt{roms/room\_jal\_ret/RAM\_I\_test\_jal.vhd} y \texttt{roms/room\_jal\_ret/RAM\_I\_test\_ret.vhd}. Estas pruebas permiten verificar no solo el salto del PC, sino también la correcta propagación de señales por el \textit{pipeline} y el almacenamiento observable del valor de retorno en memoria de datos.
+
+
+
+\subsection{Prueba 1: Instrucción JAL (Archivo: \texttt{RAM\_I\_test\_jal.vhd})}
+
+
+
+El objetivo de esta prueba es confirmar que la instrucción \texttt{JAL} realiza el salto al destino calculado y almacena la dirección de retorno ($PC+4$) en el registro destino codificado en la propia instrucción.
+
+
+
+\subsubsection{Código Ensamblador del Test JAL}
+
+A continuación se detalla el flujo del programa cargado en la memoria:
+
+
+
+\begin{table}[h]
+
+\centering
+
+\begin{tabular}{|p{2.2cm}|p{1.8cm}|p{3.2cm}|p{7.0cm}|}
+
+\hline
+
+\textbf{Etiqueta} & \textbf{Dir.} & \textbf{Instrucción} & \textbf{Descripción} \\ \hline
+
+\texttt{Inicio} & \texttt{0x00} & \texttt{JAL 3} & Salta a \texttt{0x10} y deja \texttt{PC+4 = 0x04} en el registro destino \\ \hline
+
+\texttt{Bucle}  & \texttt{0x04} & \texttt{BEQ R0, R0, -1} & Bucle de seguridad si el salto no se ejecuta correctamente \\ \hline
+
+\texttt{NOP}    & \texttt{0x08} & \texttt{NOP} & Relleno \\ \cline{2-4}
+
+               & \texttt{0x0C} & \texttt{NOP} & Relleno \\ \hline
+
+\texttt{Destino} & \texttt{0x10} & \texttt{SW R0, 0(R0)} & \textbf{Verificación:} guarda en memoria el valor enlazado por \texttt{JAL} \\ \cline{2-4}
+
+               & \texttt{0x14} & \texttt{BEQ R0, R0, -1} & Bucle infinito de fin de test \\ \hline
+
+\end{tabular}
+
+\caption{Desensamblado del test de la instrucción JAL.}
+
+\end{table}
+
+
+
+\textbf{Puntos de verificación en la simulación:}
+
+\begin{itemize}
+
+    \item \textbf{Registro destino de JAL:} Debe recibir el valor \texttt{0x00000004} en la etapa WB, ya que el enlace almacenado es \texttt{PC+4}.
+
+    \item \textbf{PC\_out / PC\_in:} Debe observarse el salto desde \texttt{0x00} hasta la dirección destino \texttt{0x10}.
+
+    \item \textbf{Memoria de Datos:} Al finalizar, la posición \texttt{0x00} de la RAM de datos debe contener el valor \texttt{0x00000004} almacenado por el \texttt{SW} del destino.
+
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf1_jal_salto.png}
+    \caption{Test \texttt{RAM\_I\_test\_jal.vhd}. Decodificación de \texttt{JAL}, cálculo de \texttt{Dirsalto\_ID} y actualización del PC hacia la dirección de destino.}
+    \label{fig:rf1_jal_salto}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf1_jal_wb.png}
+    \caption{Test \texttt{RAM\_I\_test\_jal.vhd}. Etapa WB de \texttt{JAL}: selección de \texttt{PC4\_WB} sobre \texttt{BusW} y escritura del enlace en el banco de registros.}
+    \label{fig:rf1_jal_wb}
+\end{figure}
+
+
+
+\subsection{Prueba 2: Instrucción RET (Archivo: \texttt{RAM\_I\_test\_ret.vhd})}
+
+
+
+Este test verifica la capacidad del procesador para realizar saltos indirectos utilizando una dirección de retorno almacenada previamente por una instrucción \texttt{JAL}.
+
+
+
+\subsubsection{Código Ensamblador del Test RET}
+
+
+
+\begin{table}[h]
+
+\centering
+
+\begin{tabular}{|p{2.2cm}|p{1.8cm}|p{3.4cm}|p{7.0cm}|}
+
+\hline
+
+\textbf{Etiqueta} & \textbf{Dir.} & \textbf{Instrucción} & \textbf{Descripción} \\ \hline
+
+\texttt{Llamada} & \texttt{0x1C} & \texttt{JAL 0x38} & Salta a la subrutina situada en \texttt{0x100} y deja la dirección de retorno en el registro destino \\ \hline
+
+\texttt{Main}    & \texttt{0x30} & \texttt{BEQ R0, R0, -1} & Bucle final al que debe volver la ejecución tras el \texttt{RET} \\ \hline
+
+\texttt{Sub}     & \texttt{0x104} & \texttt{SW R0, 4(R0)} & \textbf{Verificación:} guarda en memoria la dirección de retorno previamente enlazada \\ \cline{2-4}
+
+               & \texttt{0x108} & \texttt{RET R0} & \textbf{Salto indirecto} usando el valor almacenado en el banco de registros \\ \hline
+
+\end{tabular}
+
+\caption{Desensamblado del test de la instrucción RET.}
+
+\end{table}
+
+
+
+\textbf{Puntos de verificación en la simulación:}
+
+\begin{itemize}
+
+    \item \textbf{Señal BusA:} En el ciclo de \texttt{RET}, \texttt{BusA} debe mostrar la dirección de retorno previamente escrita por \texttt{JAL}.
+
+    \item \textbf{Entrada PC\_in:} Se debe observar que la entrada del PC selecciona \texttt{BusA} ignorando el $PC+4$.
+
+    \item \textbf{Memoria de Datos:} La verificación es positiva si la subrutina deja almacenada en memoria la dirección de retorno y, a continuación, el flujo vuelve al bucle final del programa principal.
+
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf1_ret_pc.png}
+    \caption{Test \texttt{RAM\_I\_test\_ret.vhd}. Resolución de \texttt{RET}: lectura de \texttt{BusA} y carga de dicha dirección en \texttt{PC\_in}.}
+    \label{fig:rf1_ret_pc}
+\end{figure}
+
+
+
+\newpage
+
+
+
+% -------------------------------------------------
+
+\section{RF2 -- Anticipación de operandos}
+
+% -------------------------------------------------
+
+
+
+\subsection{Descripción y Decisiones de Diseño}
+
+La Unidad de Anticipación (UA) tiene como objetivo principal resolver los riesgos de datos de tipo RAW (Read After Write) de forma transparente al flujo del programa, permitiendo que las instrucciones progresen por el pipeline sin necesidad de introducir ciclos de parada (stalls), siempre que el dato requerido ya haya sido generado en alguna etapa posterior. Para lograrlo, se ha diseñado una unidad lógica que monitoriza en tiempo real las dependencias entre los registros fuente de la etapa de ejecución (EX) y los registros destino de las etapas de memoria (MEM) y escritura (Write-Back).
+
+
+\begin{itemize}
+
+    \item \textbf{Prioridad de la etapa MEM:} En caso de que una instrucción en EX dependa de dos instrucciones anteriores que escriben en el mismo registro, la UA selecciona el dato de la etapa MEM (distancia 1) por ser el valor más reciente en el tiempo.
+
+    \item \textbf{Condición de Validez:} Para evitar anticipaciones erróneas de instrucciones que han sido anuladas (por ejemplo, tras un \textit{Data Abort} o un salto mal predicho), la lógica de la UA incluye los bits de validez \texttt{valid\_I\_MEM} y \texttt{valid\_I\_WB}.
+
+    
+
+    \item \textbf{Gestión de JAL a Distancia 2:} Se aprovecha la estructura del multiplexor de WB para que la instrucción JAL anticipe el valor $PC+4$ mediante el camino de distancia 2\\ (\texttt{MUX\_ctrl = "10"}). Se ha priorizado la frecuencia de reloj sobre la anticipación a distancia 1, ya que añadir una entrada extra para \texttt{PC4\_MEM} en la ALU aumentaría el retardo del camino crítico. Es más eficiente dejar que la UD inserte un \textit{stall} ya que creemos poco probable que haya un riesgo JAL-uso en comparacion con auamentar el camino critico del pipeline.
+
+\end{itemize}
+
+
+
+\subsection{Lógica de Control de los Multiplexores}
+
+Para implementar el \textit{forwarding}, se han situado dos multiplexores de 4 entradas antes de la ALU. La lógica de selección implementada en la UA sigue las siguientes condiciones:
+
+
+
+\begin{table}[h]
+
+\centering
+
+\begin{tabular}{|c|c|l|}
+
+\hline
+
+\textbf{Señal de Control} & \textbf{Valor} & \textbf{Origen del Dato} \\ \hline
+
+\texttt{MUX\_ctrl\_A/B} & \texttt{00} & Banco de Registros (Sin riesgo) \\ \hline
+
+\texttt{MUX\_ctrl\_A/B} & \texttt{01} & \texttt{ALU\_out\_MEM} (Anticipación Distancia 1) \\ \hline
+
+\texttt{MUX\_ctrl\_A/B} & \texttt{10} & \texttt{busW} / \texttt{WB} (Anticipación Distancia 2) \\ \hline
+
+\end{tabular}
+
+\caption{Configuración de los multiplexores de anticipación.}
+
+\end{table}
+
+
+
+\newpage
+
+
+
+\subsection{Implementación de la Detección de Dependencias}
+
+La UA evalúa las dependencias comparando los registros fuente de EX con los destinos de MEM y WB, aplicando una jerarquía de prioridades:
+
+
+
+\begin{enumerate}
+
+    \item \textbf{Anticipación Distancia 1 (MEM $\rightarrow$ EX):} Se activa si \texttt{(Reg\_Rs/t\_EX == RW\_MEM)} y la instrucción en MEM es válida y escribe en el banco de registros. Tiene la prioridad máxima.
+
+    \item \textbf{Anticipación Distancia 2 (WB $\rightarrow$ EX):} Se activa si \texttt{(Reg\_Rs/t\_EX == RW\_WB)} y la instrucción en WB es válida y escribe en registros. Esta ruta permite recuperar el \texttt{PC+4} de un \textbf{JAL} directamente desde el bus de escritura (\texttt{busW}).
+
+\end{enumerate}
+
+
+
+
+
+\subsection{Verificación en el Banco de Pruebas \texttt{test\_forwarding}}
+
+La verificación del RF2 se ha realizado con varios bancos de prueba específicos de la Unidad de Anticipación:
+
+\begin{itemize}
+    \item \texttt{roms/roms\_UA/RAM\_UA\_fwd.vhd}: caso general de anticipación desde WB y desde MEM.
+    \item \texttt{roms/roms\_UA/RAM\_UA\_fwd\_prioridad.vhd}: validación de la prioridad de MEM sobre WB cuando ambas coincidencias ocurren a la vez.
+    \item \texttt{roms/roms\_UA/RAM\_UA\_fwd\_jal.vhd}: caso especial de anticipación del enlace generado por \texttt{JAL}.
+    \item \texttt{roms/roms\_UA/RAM\_UA\_fwd\_store.vhd}: anticipación del dato a almacenar en una instrucción \texttt{SW}.
+\end{itemize}
+
+\subsubsection{Caso base: anticipación a distancia 1 y distancia 2}
+
+El test \texttt{RAM\_UA\_fwd.vhd} valida el funcionamiento general de la UA en dos situaciones distintas:
+
+\begin{enumerate}
+    \item \textbf{WB $\rightarrow$ EX y MEM $\rightarrow$ EX simultáneos:} la instrucción \texttt{ADD R3, R1, R2} consume un operando procedente de WB y otro procedente de MEM.
+    \item \textbf{MEM $\rightarrow$ EX:} la instrucción \texttt{ADD R4, R3, R2} reutiliza inmediatamente el resultado recién calculado de \texttt{R3}.
+    \item \textbf{Forwarding hacia Store:} el \texttt{SW R4, 68(R0)} toma el dato actualizado desde la red de anticipación y lo escribe en memoria sin esperar a WB.
+\end{enumerate}
+
+\textbf{Puntos de verificación:}
+\begin{itemize}
+    \item En el \texttt{ADD R3, R1, R2} debe observarse \texttt{MUX\_ctrl\_A = "10"} y \texttt{MUX\_ctrl\_B = "01"}.
+    \item En el \texttt{ADD R4, R3, R2} debe observarse \texttt{MUX\_ctrl\_A = "01"}.
+    \item En el \texttt{SW} final debe verse que el dato almacenado corresponde al resultado más reciente calculado por la ALU.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf2_fwd_base.png}
+    \caption{Test \texttt{RAM\_UA\_fwd.vhd}. Anticipación combinada: una entrada de la ALU toma el dato desde WB y la otra desde MEM.}
+    \label{fig:rf2_fwd_base}
+\end{figure}
+En esta captura se observa un caso mixto de anticipación en la etapa EX. La señal \texttt{mux\_ctrl\_a = "10"} indica que el operando A se selecciona desde \texttt{WB}, mientras que \texttt{mux\_ctrl\_b = "01"} indica que el operando B se toma desde \texttt{MEM}. Esto concuerda con las coincidencias entre los registros fuente en EX y los registros destino presentes en las etapas posteriores. Además, los valores mostrados en \texttt{busW = 256} y \texttt{alu\_out\_mem = 4} son los que finalmente aparecen en \texttt{mux\_a\_out} y \texttt{mux\_b\_out}. La imagen valida, por tanto, que la UA puede anticipar simultáneamente operandos desde dos etapas distintas sin insertar paradas adicionales.
+
+\subsubsection{Prioridad de la anticipación}
+
+El test \texttt{RAM\_UA\_fwd\_prioridad.vhd} demuestra la propiedad más importante de la UA: si un mismo registro coincide simultáneamente con un productor en MEM y otro en WB, debe seleccionarse el dato de MEM por ser el valor más reciente.
+
+En este escenario, dos instrucciones \texttt{LW} escriben sobre \texttt{R1} en ciclos consecutivos. Cuando la instrucción consumidora entra en EX, existen dos posibles fuentes válidas para \texttt{R1}: el valor antiguo en WB y el valor nuevo en MEM. La UA debe activar \texttt{MUX\_ctrl\_A = "01"} para escoger el dato de MEM.
+
+\textbf{Puntos de verificación:}
+\begin{itemize}
+    \item Debe observarse coincidencia simultánea entre \texttt{Reg\_Rs\_EX} y \texttt{RW\_MEM}, así como entre \texttt{Reg\_Rs\_EX} y \texttt{RW\_WB}.
+    \item A pesar de esa doble coincidencia, la salida correcta es \texttt{MUX\_ctrl\_A = "01"}.
+    \item El resultado final escrito en memoria debe corresponder al valor nuevo, no al valor antiguo.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf2_fwd_prioridad.png}
+    \caption{Test \texttt{RAM\_UA\_fwd\_prioridad.vhd}. Doble dependencia sobre el mismo registro y prioridad de MEM frente a WB.}
+    \label{fig:rf2_fwd_prioridad}
+\end{figure}
+En esta captura se observa una doble coincidencia sobre el mismo registro: \texttt{reg\_rs\_ex = 01}, \texttt{rw\_mem = 01} y \texttt{rw\_wb = 01}. Es decir, la instrucción en EX necesita un operando cuyo valor está disponible simultáneamente en MEM y en WB. La señal \texttt{mux\_ctrl\_a = "01"} demuestra que la Unidad de Anticipación prioriza correctamente el dato de MEM frente al de WB, seleccionando así la versión más reciente del registro.
+
+\subsubsection{Caso especial: anticipación del enlace de JAL}
+
+El test \texttt{RAM\_UA\_fwd\_jal.vhd} se ha diseñado para validar el caso especial de \texttt{JAL}. En este procesador, el valor enlazado no sale de la ALU, sino del camino \texttt{PC4\_WB} seleccionado en \texttt{BusW}. Por ello, la anticipación útil para \texttt{JAL} se produce a distancia 2, es decir, desde WB hacia EX.
+
+El programa realiza un \texttt{JAL}, anula la instrucción situada inmediatamente detrás del salto y, una vez alcanzado el destino, ejecuta una suma que consume el registro recién escrito por el \texttt{JAL}. La UA debe seleccionar entonces \texttt{BusW} como fuente válida.
+
+\textbf{Puntos de verificación:}
+\begin{itemize}
+    \item En la instrucción consumidora del destino del salto debe observarse \texttt{MUX\_ctrl\_A = "10"}.
+    \item \texttt{BusW} debe contener el valor \texttt{PC+4} generado por \texttt{JAL}.
+    \item El resultado posterior almacenado por el \texttt{SW} debe coincidir con el valor enlazado.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf2_fwd_jal.png}
+    \caption{Test \texttt{RAM\_UA\_fwd\_jal.vhd}. Anticipación del valor de enlace de \texttt{JAL} desde WB mediante \texttt{BusW}.}
+    \label{fig:rf2_fwd_jal}
+\end{figure}
+Esta captura muestra el caso especial de anticipación asociado a la instrucción \texttt{JAL}. En el instante señalado, \texttt{jal\_wb = 1} y tanto \texttt{rw\_wb} como \texttt{reg\_rs\_ex} toman el valor \texttt{07}, indicando que la instrucción en EX necesita precisamente el registro que está siendo escrito por \texttt{JAL} en WB. Además, se observa que \texttt{pc4\_wb = 0x00000004} y que ese mismo valor aparece en \texttt{busW}, que es el dato reenviado por la UA. La captura confirma así que el valor de enlace generado por \texttt{JAL} puede reutilizarse mediante anticipación desde WB sin necesidad de detener el cauce.
+
+\subsubsection{Anticipación del dato en Store}
+
+El test \texttt{RAM\_UA\_fwd\_store.vhd} valida que la red de anticipación también se reutiliza correctamente cuando una instrucción \texttt{SW} necesita almacenar un dato producido recientemente y todavía no escrito en el banco de registros.
+
+\textbf{Puntos de verificación:}
+\begin{itemize}
+    \item En el \texttt{SW} debe observarse activación de la ruta de anticipación sobre el operando \texttt{rt}.
+    \item La escritura final en memoria debe contener el dato recién cargado o calculado, sin introducir ciclos extra de espera.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf2_fwd_store.png}
+    \caption{Test \texttt{RAM\_UA\_fwd\_store.vhd}. Uso de la red de anticipación para suministrar el dato correcto a una instrucción \texttt{SW}.}
+    \label{fig:rf2_fwd_store}
+\end{figure}
+Esta captura valida la anticipación del dato en una instrucción \texttt{SW}. En el tramo previo se observa la activación del camino de anticipación para el operando asociado al dato a almacenar. Como resultado, en la etapa MEM aparecen \texttt{busb\_mem = 0x00000001} y \texttt{alu\_out\_mem = 0x00000044}, valor que coincide con \texttt{addr}. Además, la señal \texttt{we = 1} y el dato \texttt{dout = 0x00000001} confirman que la escritura en memoria se realiza con el valor correcto. Por tanto, la simulación demuestra que la red de anticipación también funciona adecuadamente en instrucciones de almacenamiento.
+
+
+
+\textbf{Conclusión del RF2:} las simulaciones muestran que la UA resuelve correctamente las dependencias a distancia 1 y distancia 2, respeta la prioridad de MEM sobre WB y permite reutilizar la misma red tanto para operaciones aritméticas como para el caso especial de \texttt{JAL} y para instrucciones de almacenamiento.
+
+\newpage
+
+
+
+% -------------------------------------------------
+\section{RF3 -- Gestión de Riesgos de Datos}
+% -------------------------------------------------
+% -------------------------------------------------
+\subsection{Implementación de la Gestión de Riesgos de Datos}
+% -------------------------------------------------
+
+La gestión de los riesgos de datos ({Data Hazards}) se centraliza en la \textbf{Unidad de Detención}. Su función es identificar dependencias de tipo RAW (\textit{Read After Write}) que la Unidad de Anticipación no puede resolver por hardware, deteniendo el flujo del {pipeline} mediante la inserción de burbujas ({stalls}).
+
+\subsubsection{Identificación de Uso y Dependencias}
+Para evitar paradas innecesarias (por ejemplo, ante una instrucción \texttt{NOP} o \texttt{SW}), la UD primero determina si la instrucción en la etapa \textbf{ID} consume registros mediante las señales \texttt{rs\_read} y \texttt{rt\_read}. 
+
+Una vez confirmado el uso, se monitorizan las dependencias reales comparando los registros fuente de ID con los registros destino de las etapas \textbf{EX} y \textbf{MEM}, siempre que estas tengan activa la señal \texttt{RegWrite} y las instrucciones sean válidas.
+
+\subsubsection{Escenarios de Parada (stall\_ID)}
+
+\begin{itemize}
+    \item \textbf{Riesgo Load-Use:} Se activa la señal \texttt{ld\_uso} cuando una instrucción \texttt{LW} está en EX (\texttt{MemRead\_EX = '1'}) y su destino coincide con los operandos en ID. Dado que el dato no sale de la memoria hasta el final de la etapa MEM, es obligatorio detener el \textit{pipeline} un ciclo.
+    \item \textbf{Riesgos en Saltos (BEQ / RET):} Debido a que los saltos se resuelven en la etapa \textbf{ID} para reducir la penalización de control, los operandos deben estar disponibles en dicha etapa. Si el productor del dato está en EX o MEM, la anticipación a la etapa ID no es posible, por lo que se para la instrucción en ID  hasta que el productor llegue a la etapa de escritura ({WB}).
+    \item \textbf{Riesgo JAL-Uso:} Se activa \texttt{jal\_uso} si una instrucción en ID requiere el registro rs del {JAL} que aún se encuentra en la etapa EX.
+\end{itemize}
+
+
+\newpage
+\subsubsection{Respuesta}
+Cuando la señal interna \texttt{riesgo\_datos\_ID} se pone a '1', la UD activa la salida \texttt{stall\_ID}, lo que provoca:
+\begin{enumerate}
+    \item \textbf{Congelación etapas IF/ID:} Se bloquea la actualización del PC y del registro  \texttt{IF/ID}, manteniendo la instrucción conflictiva en la etapa ID.
+    \item \textbf{Inserción de burbuja:} Se invalida la instrucción que progresa hacia la etapa EX con (\texttt{valid\_I\_EX = '0'}), convirtiéndo la instruccion en EX en un \texttt{NOP} para proteger los registros.
+\end{enumerate}
+
+\subsubsection{Parada Estructural y Global (stall\_MIPS)}
+Finalmente, la UD gestiona paradas que afectan al procesador completo mediante la señal \texttt{stall\_MIPS}. Esta se activa en dos casos críticos:
+\begin{itemize}
+    \item \textbf{Memoria lenta:} Cuando \texttt{IO\_MEM\_ready} es '0', indicando que el subsistema de datos necesita más ciclos para completar un acceso.
+    \item \textbf{ALU Multiciclo:} Cuando \texttt{ALU\_ready} es '0', indicando que una instrucción \texttt{MAC} o \texttt{MAC\_ini} todavía está operando en la unidad aritmética.
+\end{itemize}
+
+\subsubsection{Verificación del RF3}
+
+La validación de la gestión de riesgos de datos se ha realizado con dos bancos de pruebas específicos de la Unidad de Detención:
+
+\begin{itemize}
+    \item \texttt{roms/room\_UD/RAM\_UD\_test\_lw.vhd}: riesgo \textit{load-use} real.
+    \item \texttt{roms/room\_UD/RAM\_UD\_test\_jal\_ud.vhd}: dependencia con el registro enlazado por \texttt{JAL}.
+\end{itemize}
+
+\subsubsection{Caso 1: riesgo load-use}
+
+El test \texttt{RAM\_UD\_test\_lw.vhd} reproduce el caso clásico en el que una instrucción \texttt{LW} produce un dato que la instrucción siguiente necesita consumir inmediatamente. En ese escenario la UA no basta, porque el dato todavía no está disponible al comienzo de EX y, por tanto, la UD debe insertar una burbuja.
+
+En la secuencia usada en el test, dos cargas leen valores desde memoria y la suma posterior intenta utilizar ambos resultados sin ciclos de separación suficientes. La respuesta correcta del hardware consiste en mantener la instrucción consumidora detenida en ID y evitar que avance hasta que el dato esté disponible.
+
+\textbf{Puntos de verificación:}
+\begin{itemize}
+    \item La señal \texttt{stall\_ID} debe activarse cuando la instrucción consumidora entra en ID y el productor \texttt{LW} todavía está en EX.
+    \item Durante ese ciclo, \texttt{load\_PC} y \texttt{load\_ID} deben quedar bloqueados, manteniendo congeladas las etapas previas.
+    \item La entrada a EX debe invalidarse mediante \texttt{valid\_I\_EX = 0}, insertando una burbuja.
+    \item Una vez resuelto el riesgo, la ejecución continúa normalmente y la escritura final en memoria refleja el valor correcto.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf3_load_use.png}
+    \caption{Test \texttt{RAM\_UD\_test\_lw.vhd}. Activación de \texttt{stall\_ID} ante un riesgo \textit{load-use} y congelación de IF/ID.}
+    \label{fig:rf3_load_use}
+\end{figure}
+Esta captura muestra el caso clásico de riesgo \textit{load-use}. En el instante señalado, la instrucción situada en EX es una carga, como indica \texttt{memread\_ex = 1}, y su registro destino es \texttt{rw\_ex = 01}. Al mismo tiempo, la instrucción retenida en ID necesita ese mismo operando, ya que \texttt{reg\_rs\_id = 01}. Como consecuencia, la Unidad de Detención activa \texttt{stall\_id = 1} y bloquea el avance de las etapas previas mediante \texttt{load\_pc = 0} y \texttt{load\_id = 0}. La simulación confirma así que el procesador detecta correctamente la dependencia \textit{load-use} y detiene el cauce durante el ciclo necesario para evitar el uso prematuro del dato.
+
+\subsubsection{Caso 2: dependencia JAL-uso}
+
+El test \texttt{RAM\_UD\_test\_jal\_ud.vhd} valida el caso especial en el que una instrucción posterior necesita usar inmediatamente el registro que está siendo escrito por \texttt{JAL}. En este procesador, el valor enlazado por \texttt{JAL} se obtiene definitivamente por el camino de WB, por lo que la UD debe forzar una parada cuando una instrucción en ID intenta consumirlo demasiado pronto.
+
+Este caso es especialmente relevante porque combina la lógica de salto con la lógica de riesgos de datos. La instrucción \texttt{JAL} redirige el flujo y, además, produce un dato arquitectónicamente visible que puede ser utilizado por instrucciones posteriores como una dirección de retorno.
+
+\textbf{Puntos de verificación:}
+\begin{itemize}
+    \item Debe observarse la activación de \texttt{stall\_ID} cuando la instrucción en ID depende del valor que \texttt{JAL} está generando.
+    \item La instrucción consumidora debe permanecer retenida en ID hasta que el valor enlazado esté disponible.
+    \item Tras resolverse la dependencia, el flujo debe continuar correctamente y \texttt{RET} debe poder usar el valor retornado desde el banco de registros.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf3_jal_uso.png}
+    \caption{Test \texttt{RAM\_UD\_test\_jal\_ud.vhd}. Parada de la etapa ID por dependencia con el registro escrito por \texttt{JAL}.}
+    \label{fig:rf3_jal_uso}
+\end{figure}
+Esta captura muestra el caso especial de dependencia asociado al valor de retorno generado por una llamada previa. En el instante señalado, la instrucción en ID es un \texttt{RET} (\texttt{ret\_id = 1}), mientras que la UD activa \texttt{stall\_id = 1} para impedir que avance prematuramente. Al mismo tiempo, el valor requerido por el retorno todavía está siendo producido por una instrucción anterior en el cauce, como refleja la información de registro destino en EX. La simulación confirma así que la Unidad de Detención identifica correctamente este caso especial y retiene la instrucción en ID hasta que el valor de retorno está disponible.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf3_burbuja.png}
+    \caption{Test \texttt{RAM\_UD\_test\_lw.vhd}. Inserción de burbuja mediante invalidación de \texttt{valid\_I\_EX}.}
+    \label{fig:rf3_burbuja}
+\end{figure}
+La captura muestra el efecto de la parada sobre la etapa de ejecución. Tras detectarse el riesgo de datos, la instrucción conflictiva permanece retenida en ID (\texttt{valid\_i\_id = 1}), mientras que la entrada a EX se invalida (\texttt{valid\_i\_ex = 0}). Esto equivale a insertar una burbuja en el cauce, evitando que una instrucción dependiente avance antes de que el dato cargado esté disponible. Una vez introducida la burbuja, las señales de carga vuelven a activarse y el \textit{pipeline} puede reanudar su funcionamiento normal.
+
+\textbf{Conclusión del RF3:} las simulaciones confirman que la Unidad de Detención identifica correctamente las dependencias que la Unidad de Anticipación no puede resolver, detiene el cauce solo cuando es necesario y reanuda la ejecución sin comprometer la consistencia del estado arquitectónico.
+
+
+% -------------------------------------------------
+\section{RF4 -- Riesgos de Control}
+% -------------------------------------------------
+
+\subsection{Gestión de Riesgos de Control (Flushing)}
+Los riesgos de control ocurren cuando el flujo secuencial del programa se ve alterado por instrucciones de salto (\texttt{BEQ, JAL, RET, RTE}). Debido a la arquitectura segmentada, mientras una instrucción de salto se decodifica en la etapa \texttt{ID}, la instrucción siguiente ya ha sido cargada en la etapa \texttt{IF}. Si el salto se confirma, esa instrucción cargada es incorrecta y debe ser invalidada.
+
+Para resolver esto, la Unidad de Detención (UD) implementa una estrategia de \textbf{anulación de instrucción} mediante la señal \texttt{Kill\_IF}.
+
+\subsubsection{Lógica de la señal Kill\_IF}
+En este diseño, los saltos se resuelven en la etapa de decodificación (\texttt{ID}) para minimizar la penalización a un solo ciclo de reloj. La lógica implementada en la UD para la señal \texttt{Kill\_IF} es:
+
+\begin{lstlisting}[language=VHDL]
+Kill_IF <= '1' when (salto_tomado = '1' and valid_I_ID = '1') else '0';
+\end{lstlisting}
+
+Cuando \texttt{Kill\_IF} se activa, el bit de validez de la instrucción que entra al registro \texttt{IF/ID} se pone a '0' (\texttt{valid\_I\_ID = '0'}). Esto transforma la instrucción invalida en una  \texttt{NOP}, asegurando que no tenga efectos en el estado del procesador (escritura en memoria o registros) al progresar hacia las etapas de ejecución.
+
+\subsubsection{Interacción entre Saltos y Detenciones (Stalls)}
+Un aspecto crítico de la implementación es la prioridad entre los riesgos de datos y los de control. Si una instrucción de salto (como \texttt{BEQ} o \texttt{RET}) depende de un dato que aún no ha sido generado, la UD activará primero \texttt{stall\_ID}. 
+
+Durante este estado de parada, la señal \texttt{salto\_tomado} no es definitiva. Por lo tanto, la UD asegura que \texttt{Kill\_IF} solo se active cuando la instrucción de salto sea válida y no esté detenida, evitando anular instrucciones de forma incorrecta.
+
+\subsection{Verificación del RF4}
+
+\subsubsection{Test de Verificación: Salto JAL y Anulación (\texttt{Kill\_IF})}
+\noindent\textbf{RAM usada:} \texttt{RAM\_UD\_test\_jal\_if.vhd}
+
+
+Para verificar el correcto funcionamiento de los riesgos de control, se ha diseñado un escenario donde una instrucción entra en el pipeline inmediatamente después de un salto incondicional \texttt{JAL}. El objetivo es confirmar que dicha instrucción es invalidada antes de ejecutar cualquier operación.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{1.8cm}|p{1.5cm}|p{3.4cm}|p{7.3cm}|}
+\hline
+\textbf{Etiqueta} & \textbf{Dir.} & \textbf{Instrucción} & \textbf{Descripción} \\ \hline
+INI & 0x00 & \texttt{BEQ R0, R0, 0x10} & Salto inicial a la zona de código útil. \\ \hline
+MAIN & 0x10 & \texttt{JAL 0x18} & Salto a 0x18 y escritura de la dirección de retorno en el registro destino. \\ \hline
+\color[HTML]{FF0000} 
+KILL & 0x14 & \texttt{ADD R1, R1, R1} & \textbf{Instrucción a anular (Kill\_IF).} \\ \hline
+TARGET & 0x18 & \texttt{ADD R2, R2, R2} & Destino real del salto. \\ \hline
+LOOP & 0x1C & \texttt{BEQ R0, R0, -1} & Bucle final de seguridad. \\ \hline
+\end{tabular}
+\caption{Desensamblado del test de JAL para riesgo de control.}
+\label{tab:test_control}
+\end{table}
+
+\subsubsection{Análisis del comportamiento }
+
+En esta primera fase de la simulación, el cursor se sitúa en el ciclo donde la instrucción de salto entra en la etapa de decodificación.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/JAL_KILL_IF_1.png}
+    \caption{Test \texttt{RAM\_UD\_test\_jal\_if.vhd}. Detección del salto \texttt{JAL} y cálculo de la dirección de destino.}
+    \label{fig:jal_kill_1}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Instrucción en ID:} La señal \texttt{ir\_id} muestra el valor \texttt{14000001}, correspondiente al \texttt{JAL}.
+    \item \textbf{Cálculo del Salto:} La señal \texttt{dirsalto\_id} ya ha calculado correctamente el destino \texttt{0x18}.
+    \item \textbf{Activación del Control:} La señal \texttt{salto\_tomado} sube a \texttt{'1'}. En este mismo instante, la instrucción \texttt{04210800} (\texttt{ADD R1, R1, R1}) está siendo capturada en la etapa \textbf{IF}.
+\end{itemize}
+
+En la segunda captura, se observa el efecto inmediato de la señal de anulación en el siguiente ciclo de reloj.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/JAL_KILL_IF_2.png}
+    \caption{Test \texttt{RAM\_UD\_test\_jal\_if.vhd}. Efecto de la señal \texttt{Kill\_IF} e invalidación del bit de validez.}
+    \label{fig:jal_kill_2}
+\end{figure}
+
+\textbf{Evidencias de correcto funcionamiento:}
+\begin{itemize}
+    \item \textbf{Invalidación :} Al estar \texttt{salto\_tomado} a \texttt{'1'}, la Unidad de Detención activa \texttt{Kill\_IF}. Como resultado, el bit \texttt{valid\_i\_id} pasa a \texttt{'0'} justo cuando el \texttt{ADD} de la dirección \texttt{0x14} debería haber empezado a decodificarse.
+    \item \textbf{Propagación de la Burbuja:} Al ser \texttt{valid\_i\_id = '0'}, esta instrucción se convierte en una "burbuja" que no alterará el banco de registros ni la memoria.
+    \item \textbf{Actualización del PC:} El \texttt{pc\_out} cambia de la dirección conflictiva directamente al destino \texttt{0x18}, donde se encuentra la instrucción válida \texttt{ADD R2, R2, R2}.
+\end{itemize}
+
+\textbf{Conclusión del Test:} Las capturas demuestran que el procesador gestiona el riesgo de control eliminando la instrucción situada despues del salto mediante hardware, manteniendo la coherencia del programa con una penalización de un único ciclo.
+
+Aqui se presenta el pipeline del test: 
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Instrucción} & \textbf{C1} & \textbf{C2} & \textbf{C3} & \textbf{C4} & \textbf{C5} & \textbf{C6} & \textbf{C7} & \textbf{C8} & \textbf{C9} & \textbf{C10} \\ \hline
+0x00: BEQ (Reset)    & F & D & E & M & W & & & & & \\ \hline
+0x04: Bucle (KILL)   &   & \textcolor{red}{F} & &  &  & & & & & \\ \hline
+0x10: JAL 0x18       &   &   & F & D & E & M & W & & & \\ \hline
+0x14: ADD R1 (KILL)  &   &   &   &   & \textcolor{red}{F} &  &  &  & & \\ \hline
+0x18: ADD R2 (DEST)  &   &   &   &   &   & F & D & E & M & W \\ \hline
+\end{tabular}%
+}
+\caption{Diagrama del pipeline. \textcolor{red}{F} indica el ciclo donde se activa Kill\_IF.}
+\end{table}
+
+
+% -------------------------------------------------
+\subsubsection{Test de la Unidad de Detención: \textit{RAM\_UD\_test\_jump}}
+% -------------------------------------------------
+
+Para verificar la robustez de la Unidad de Detención (UD) ante escenarios complejos, se ha diseñado el test \texttt{RAM\_UD\_test\_jump}. Este escenario es crítico ya que fuerza la activación encadenada de paradas por dependencia de datos (\textit{stalls}) y anulaciones por salto (\textit{flushing}), validando la lógica de prioridades y la jerarquía de señales de la UD.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{2.0cm}|p{1.5cm}|p{3.4cm}|p{7.1cm}|}
+\hline
+\textbf{Etiqueta} & \textbf{Dir.} & \textbf{Instrucción} & \textbf{Efecto Esperado en el Cauce} \\ \hline
+PROD\_1      & 0x00 & \texttt{ADD R1, R0, R0} & Productor de R1 (Etapa EX). \\ \hline
+CONSUMIDORA  & 0x04 & \texttt{BEQ R1, R0, 2}  & \textbf{Stall} (por R1) y posterior \textbf{Kill}. \\ \hline
+\color[HTML]{FF0000} 
+KILL\_1      & 0x08 & \texttt{ADD R2, R1, R1} & \textbf{Instrucción anulada} (Burbuja). \\ \hline
+TARGET       & 0x10 & \texttt{JAL 0x18}        & Salto a subrutina y generación del registro de retorno. \\ \hline
+\color[HTML]{FF0000} 
+KILL\_2      & 0x14 & \texttt{ADD R3, R1, R1} & \textbf{Instrucción anulada} (Burbuja). \\ \hline
+RET          & 0x18 & \texttt{RET}            & \textbf{Stall} por dependencia con el valor de retorno y posterior \textbf{Kill}. \\ \hline
+\end{tabular}
+\caption{Secuencia de instrucciones del test \texttt{RAM\_UD\_test\_jump}.}
+\label{tab:test_jump_stress}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/JUMP_KILL_IF_1.png}
+    \caption{Test \texttt{RAM\_UD\_test\_jump.vhd}. Verificación del flujo del test con paradas y anulaciones encadenadas.}
+    \label{fig:jal_kill_2}
+\end{figure}
+
+En esta imagen se puede observar el comportamiento del \textit{pipeline} sigue la lógica de detención y anulación diseñada:
+
+\begin{itemize}
+    \item \textbf{Detección de Dependencias:} Cuando la instrucción \texttt{ADD R1, R0, R0} (0x00) avanza hacia la etapa de ejecución, la instrucción \texttt{BEQ} (0x04) entra en la etapa \textbf{ID}. En este punto, la UD detecta que el \texttt{BEQ} depende del valor de \texttt{R1}, el cual aún no ha sido escrito en el banco de registros. Como consecuencia, se activa la señal \textbf{\texttt{stall\_id}}, lo que provoca que el \texttt{PC} y el registro de instrucción de la etapa ID se "congelen", manteniendo el \texttt{BEQ} en decodificación durante los ciclos necesarios.
+    
+    \item \textbf{Resolución del Salto y Anulación :} Una vez que el dato de \texttt{R1} es estable, el comparador de la etapa ID confirma que el salto debe producirse \\(\texttt{salto\_tomado = '1'}). En ese mismo instante, se observa la activación de la señal \textbf{\texttt{Kill\_IF}}. Esta señal es muy importante, ya que invalida la instrucción situada en la dirección \texttt{0x08} (\texttt{ADD R2, R1, R1}) que ya había sido capturada en la etapa \textbf{IF}, transformándola en una burbuja para evitar su ejecución errónea.
+    
+    \item \textbf{Redirección del Flujo:} Simultáneamente, la señal \texttt{dirsalto\_id} toma el valor \texttt{0x10}, que es el destino del \texttt{BEQ}. El multiplexor de entrada al PC selecciona este valor, cargando la instrucción \texttt{JAL} en el siguiente ciclo. Este proceso se repite de forma análoga con la instrucción \texttt{RET}, la cual vuelve a generar un \textit{stall} para esperar el valor de retorno ya producido por la llamada antes de saltar de nuevo al flujo principal.
+\end{itemize}
+
+\\
+Este análisis confirma que la UD prioriza correctamente la resolución de dependencias de datos antes de permitir que la lógica de saltos altere el contador de programa, asegurando una ejecución determinista y libre de riesgos estructurales o de control.
+
+ \newpage
+\subsubsection{Verificación mediante Contadores de Rendimiento (RF9)}
+
+Esta imagen muestra el estado final de los contadores de rendimiento tras la ejecución del test. Estos registros son fundamentales para validar la eficiencia del pipeline y confirmar que la gestión de riesgos no introduce penalizaciones extra.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/JUMP_CONTADOR.png}
+    \caption{Test \texttt{RAM\_UD\_test\_jump.vhd}. Estado final de los contadores de rendimiento tras el test de saltos.}
+    \label{fig:jal_kill_2}
+\end{figure}
+
+\textbf{Análisis de los resultados obtenidos:}
+
+\begin{itemize}
+    \item \textbf{Control Stalls (3):} El contador registra exactamente 3 stalls. Esto coincide con las tres activaciones de la señal \texttt{Kill\_IF} observadas en los cronogramas anteriores, correspondientes a las instrucciones anuladas tras los saltos del \texttt{BEQ}, \texttt{JAL} y \texttt{RET}.
+    \item \textbf{Data Stalls (2):} El contador indica 2 ciclos de parada por dependencias de datos. Estos corresponden a los ciclos en los que la señal \texttt{stall\_id} estuvo activa: una vez para esperar el registro \texttt{R1} del \texttt{BEQ} y otra para esperar el valor de retorno consumido por \texttt{RET}.
+\end{itemize}
+
+
+En definitiva, que los contadores coincidan exactamente con lo que vemos en el pipeline (las 3 anulaciones por \textit{Kill\_IF} y los 2 ciclos de parada por \textit{stall\_id}) confirma que el procesador funciona como debe. Esta correspondencia demuestra que la \textbf{Unidad de Detención} identifica y gestiona los riesgos en el momento justo, sin perder ciclos de más y sin dejar que ninguna instrucción inválida escriba datos erróneos en los registros. 
+
+Con este test, queda validado que el procesador es robusto: el sistema es capaz de detenerse ante una dependencia de datos y, en el mismo ciclo, anular el flujo de instrucciones incorrecto tras un salto, manteniendo siempre la integridad de la ejecución y de las métricas de rendimiento.
+
+
+% Asegúrate de tener esto en el preámbulo de tu .tex:
+% \usepackage{graphicx}
+% \usepackage[table]{xcolor}
+
+\subsubsection*{Cronograma del Pipeline}
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Instrucción} & \textbf{C1} & \textbf{C2} & \textbf{C3} & \textbf{C4} & \textbf{C5} & \textbf{C6} & \textbf{C7} & \textbf{C8} & \textbf{C9} & \textbf{C10} \\ \hline
+0x00: ADD R1, R0, R0 & F & D & E & M & W & & & & & \\ \hline
+0x04: BEQ R1, R0, 2  &   & F & D* & D* & D & E & M & W & & \\ \hline
+0x08: ADD R2 (KILL)  &   &   & F* & F* & \textcolor{red}{F} &  &  & & & \\ \hline
+0x10: JAL 0x18       &   &   &    &    &   & F & D & E & M & W \\ \hline
+0x14: ADD R3 (KILL)  &   &   &    &    &   &   & \textcolor{red}{F} &  & & \\ \hline
+\end{tabular}%
+}
+\caption{Diagrama del pipeline. \textbf{D*} indica ciclo de Stall y \textcolor{red}{F}  {KILL IF}}
+\end{table}
+
+
+% -------------------------------------------------
+\section{RF5 -- Riesgos Estructurales y Gestión de Memoria}
+% -------------------------------------------------
+
+\subsection{Gestión de la ALU Multiciclo (MAC)}
+Los riesgos estructurales surgen cuando una instrucción requiere un recurso hardware por más tiempo del permitido por el flujo del \textit{pipeline}. En este procesador, esto ocurre con las instrucciones de multiplicación y acumulación (\texttt{MAC} y \texttt{MAC\_ini}).
+
+\begin{itemize}
+    \item \textbf{Lógica de Control:} La UD monitoriza la señal \texttt{ALU\_ready}. Si esta cae a '0', indica que la unidad MAC está operando. 
+    \item \textbf{Parada Global:} Se activa la señal \texttt{stall\_MIPS}, que congela todas las etapas del \textit{pipeline} (\texttt{IF, ID, EX, MEM}) simultáneamente, evitando que cualquier instrucción progrese hasta que el cálculo finalice.
+\end{itemize}
+
+\subsection{Gestión de la señal IO\_MEM\_ready}
+El sistema de memoria de datos y E/S utiliza un protocolo basado en la señal de validación \texttt{IO\_MEM\_ready}. Aunque en este primer proyecto la memoria se comporta de forma ideal (respondiendo siempre en un ciclo), el hardware ya está preparado para gestionar latencias superiores.
+
+\begin{itemize}
+    \item \textbf{Comportamiento Actual:} Actualmente, \texttt{IO\_MEM\_ready} se mantiene a '1'. Sin embargo, la UD implementa la lógica necesaria para detener el procesador si esta señal cae a '0' mientras una instrucción válida está en la etapa de Memoria (\texttt{valid\_I\_MEM}).
+    \item \textbf{Jerarquía de Paradas:} La gestión de la memoria tiene la máxima prioridad dentro de la señal \texttt{stall\_MIPS\_internal}. Si la memoria no está lista, se detiene el flujo completo para garantizar la integridad de los datos.
+    \\
+\end{itemize}
+
+\begin{lstlisting}[
+    language=VHDL, 
+    caption={Lógica de (\texttt{stall\_MIPS}) para gestión de riesgos estructurales y memoria.}, 
+    label={lst:stall_mips},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!50!black},
+    frame=single,
+    breaklines=true
+]
+-- stall_MIPS: Parada global por memoria lenta o ALU multiciclo (MAC)
+-- Se activa si la memoria no esta lista (en etapa MEM) 
+-- o si la ALU esta operando (en etapa EX).
+
+stall_MIPS_internal <= (not(IO_MEM_ready) and valid_I_MEM) 
+                       or (not(ALU_ready) and valid_I_EX);
+                       
+stall_MIPS <= stall_MIPS_internal;
+\end{lstlisting}
+
+\subsection{Perspectiva de Diseño (Proyecto 2)}
+Esta implementación garantiza la compatibilidad futura del procesador. En la siguiente fase del proyecto, cuando se introduzca la \textbf{Jerarquía de Memoria}, la señal \texttt{IO\_MEM\_ready} podrá bajar a '0' ante un fallo de caché. Gracias a la lógica ya integrada en la UD, el procesador será capaz de esperar los ciclos necesarios sin requerir cambios adicionales en la unidad de control de riesgos.
+
+\subsubsection{Nota sobre la verificación}
+En el estado actual del proyecto, la memoria de datos utilizada en las simulaciones responde siempre con \texttt{IO\_MEM\_ready = 1}. Por ello, dentro de este RF la parte efectivamente validada mediante cronogramas corresponde sobre todo al riesgo estructural introducido por la ALU multiciclo (\texttt{MAC}), mientras que la parada por memoria lenta queda implementada y preparada para futuras extensiones.
+
+\subsubsection{Test de la Unidad MAC Multiciclo: \textit{RAM\_MAC.vhd}}
+
+Para verificar la gestión de riesgos estructurales y el funcionamiento de la ALU multiciclo, se ha ejecutado el test \texttt{mac\_multiciclo}. Este escenario valida cómo la Unidad de Detención (UD) es capaz de congelar el pipeline completo mientras la unidad MAC realiza operaciones que requieren varios ciclos de reloj.
+
+En esta primera captura se puede ver el comportamiento del sistema cuando la instrucción \texttt{MAC\_INI} (con opcode \texttt{0x04225005}) llega a la etapa de ejecución.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{image_8a4a83.png}
+    \caption{Test \texttt{RAM\_MAC.vhd}. Vista global de la ejecución MAC y activación de la parada global.}
+\end{figure}
+
+\newpage
+Al entrar la instrucción en la etapa EX, se observa claramente cómo la señal \textbf{\texttt{alu\_ready}} de la ALU cae a '0'. En ese mismo instante, la UD reacciona y pone la señal \textbf{\texttt{stall\_mips}} a '1'. Esto detiene el procesador por completo: se aprecia que las señales de validez de las etapas previas (\texttt{valid\_i\_if} y \texttt{valid\_i\_id}) se mantienen congeladas, impidiendo que el \texttt{PC} progrese de la dirección \texttt{0x24} y forzando al resto de instrucciones a esperar a que la ALU termine.
+
+En esta imagen de detalle de la etapa de ejecución, se puede seguir paso a paso el cálculo interno y cómo se mantienen los datos.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{image_9428cb.png}
+    \caption{Test \texttt{RAM\_MAC.vhd}. Detalle de las señales internas en la etapa EX durante el cálculo multiciclo.}
+\end{figure}
+
+Se ve que los operandos reales en EX (\texttt{mux\_a\_out} y \texttt{mux\_b\_out}) han tomado correctamente los valores de los pesos y las activaciones (\texttt{0x27CF25CC} y \texttt{0x12E625CC}). La señal \texttt{alu\_out} se mantiene estable durante los ciclos de \textit{stall} hasta que la FSM interna de la ALU completa la suma de productos y aparece el resultado \textbf{\texttt{0x000017A1}} (que es el 6049 decimal). También se nota que \texttt{load\_ex} está activo, lo que confirma que el hardware sabe que el pipeline está bloqueado por un recurso ocupado.
+\newpage
+Por último, en la captura del banco de registros y los contadores, se confirma que el cálculo y la monitorización funcionan perfectamente.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{image_942945.jpg}
+    \caption{Test \texttt{RAM\_MAC.vhd}. Escritura final en registros y estado de los contadores de rendimiento.}
+\end{figure}
+
+En el banco de registros se comprueba que el valor \textbf{6049} se ha escrito en el \texttt{R10} y, tras ejecutar la siguiente instrucción \texttt{MAC}, el acumulador interno suma el nuevo resultado para guardar \textbf{12098} en el \texttt{R11}. Esto valida que el acumulador (\texttt{acc\_reg}) mantiene su estado entre instrucciones. 
+
+Además, si miramos los contadores, el de \textbf{\texttt{ex\_stalls}} ha subido exactamente los ciclos que la ALU ha estado ocupada. El contador de ciclos (\texttt{cycles}) sigue avanzando mientras la ALU trabaja, pero el de instrucciones (\texttt{ins}) solo sube cuando la instrucción llega  al final (\textit{Write-Back}), lo que demuestra que las métricas de rendimiento son reales y el procesador es robusto ante riesgos estructurales.
+
+\textbf{Conclusión:} El test confirma que la UD gestiona la parada global el tiempo exacto que requiere la unidad MAC (3 ciclos por operación) y que los resultados aritméticos son exactos.
+
+\subsubsection*{Cronograma de ejecución del Pipeline: Test MAC Multiciclo}
+
+A continuación se muestra el flujo de instrucciones para el test \texttt{RAM\_MAC.vhd}. Se observa cómo la señal \texttt{alu\_ready} a '0' genera un \textit{stall} global que afecta a todas las etapas previas a EX.
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Instrucción} & \textbf{C1} & \textbf{C2} & \textbf{C3} & \textbf{C4} & \textbf{C5} & \textbf{C6} & \textbf{C7} & \textbf{C8} & \textbf{C9} & \textbf{C10} & \textbf{C11} & \textbf{C12} \\ \hline
+0x20: MAC\_INI R10   & F & D & E1 & E2 & E3 & M & W &    &    &    &    &    \\ \hline
+0x24: MAC R11        &   & F & D* & D* & D  & E1 & E2 & E3 & M  & W  &    &    \\ \hline
+0x28: Bucle final    &   &   & F* & F* & F  & D* & D* & D  & E  & M  & W  &    \\ \hline
+\end{tabular}%
+}
+\caption{Cronograma de las operaciones MAC. \textbf{E1, E2, E3} representan los estados de la FSM de la ALU. \textbf{*} indica ciclo de parada por \texttt{stall\_mips}.}
+\end{table}
+
+
+\paragraph{Análisis del cronograma:}
+\begin{itemize}
+    \item \textbf{Ciclos C3-C5:} La instrucción \texttt{MAC\_INI} entra en la etapa EX. Como es una operación multiciclo, la señal \texttt{alu\_ready} baja a '0', forzando un \textbf{stall global}. Las instrucciones en Decode (\texttt{MAC}) y Fetch (\texttt{Bucle}) se quedan congeladas (\texttt{D*} y \texttt{F*}) hasta que la ALU termina el acumulado.
+    \item \textbf{Ciclos C6-C8:} Una vez liberado el pipeline, la instrucción \texttt{MAC} entra en EX y vuelve a repetir el proceso de 3 ciclos de ejecución, desplazando de nuevo el avance del bucle final.
+    \item \textbf{Resultados:} Este comportamiento valida que la Unidad de Detención gestiona correctamente los riesgos estructurales, impidiendo que una nueva instrucción entre en la ALU hasta que la operación anterior ha finalizado.
+\end{itemize}
+
+\subsubsection{Test de Control y Riesgo Estructural: \textit{RAM\_MAC\_BEQ.vhd}}
+
+Este test está diseñado para verificar la interacción entre la Unidad de Detención (UD)ante un riesgo estructural por ALU multiciclo y un salto condicional inmediato. El objetivo es comprobar que el procesador no resuelve el salto hasta que la instrucción multiciclo libere el cauce, asegurando que el flujo de control se mantenga íntegro.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{2.0cm}|p{1.7cm}|p{3.8cm}|p{6.7cm}|}
+\hline
+\textbf{Etiqueta} & \textbf{Dir.} & \textbf{Instrucción} & \textbf{Efecto Esperado } \\ \hline
+   & 0x10 & \texttt{JAL 0x18}       & Salto inicial para entrar en código. \\ \hline
+MAC\_OP      & 0x20 & \texttt{MAC\_INI R10,R1,R2} & \textbf{Stall Estructural} (3 ciclos). \\ \hline
+BRANCH       & 0x24 & \texttt{BEQ R0, R0, 0x36}   & Bloqueado en ID por MAC.
+            &       &           &                  &Salto a 0x100. \\ \hline
+\color{red}KILL IF  & 0x28 & \texttt{ADD R12, R10, R0}   & \textbf{Kill} por salto del BEQ. \\ \hline
+TARGET       & 0x100 & \texttt{ADD R12, R10, R0}  & Destino del salto. \\ \hline
+\end{tabular}
+\caption{Secuencia de instrucciones del test \texttt{RAM\_MAC\_BEQ}.}
+\label{tab:test_mac_beq}
+\end{table}
+
+El test busca confirmar que:
+\begin{enumerate}
+    \item La señal \texttt{stall\_mips} prevalece sobre cualquier otra lógica de control mientras \texttt{alu\_ready} sea '0'.
+    \item El cálculo del \texttt{BEQ} debe esperar en la etapa ID sin cargar el PC con la dirección de destino hasta que finalice la \texttt{MAC}.
+    \item Una vez resuelto el riesgo estructural, el salto debe ejecutarse inmediatamente y anular (\texttt{Kill\_IF}) la instrucción situada en \texttt{0x28}.
+\end{enumerate}
+
+\paragraph{Análisis de Capturas de Simulación}
+
+En la primera captura, nos fijamos en el momento en que la instrucción \texttt{MAC\_INI} entra en la etapa EX. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{image_e8457c.png}
+    \caption{Test \texttt{RAM\_MAC\_BEQ.vhd}. Detección del riesgo estructural y bloqueo temporal del salto \texttt{BEQ}.}
+\end{figure}
+
+Se observa que la señal \texttt{alu\_ready} cae a '0' y automáticamente se activa \textbf{\texttt{stall\_mips}}. En la etapa ID tenemos el \texttt{BEQ} (opcode \texttt{10000036}). A pesar de que la lógica de saltos ya detecta que la condición se cumple, el \texttt{PC} no se actualiza a \texttt{0x100} sino que se mantiene congelado. Esto demuestra que la UD prioriza la estabilidad de la etapa EX antes de permitir un cambio en el flujo de control.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{image_e845f6.png}
+    \caption{Test \texttt{RAM\_MAC\_BEQ.vhd}. Resolución del \textit{stall} estructural y ejecución posterior del salto con \texttt{Kill\_IF}.}
+\end{figure}
+
+Cuando la MAC termina sus 3 ciclos, \texttt{alu\_ready} vuelve a '1' y \texttt{stall\_mips} desaparece. En ese instante, el \texttt{BEQ} toma el control: la señal \textbf{\texttt{salto\_tomado}} se pone a 1, el \texttt{pc\_in} carga la dirección \texttt{0x00000100} y se activa simultáneamente \textbf{\texttt{kill\_if}} para limpiar la instrucción de la dirección \texttt{0x28}.
+
+\paragraph{Consistencia con Contadores de Rendimiento}
+La verificación final se realiza con el estado de los contadores.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{image_e84901.png}
+    \caption{Test \texttt{RAM\_MAC\_BEQ.vhd}. Estado final de contadores para \texttt{mac\_beq}.}
+\end{figure}
+
+\paragraph{Validación mediante Contadores de Rendimiento}
+
+El estado final de los contadores en la simulación (visible en la parte inferior de la última captura) es la métrica que confirma que la gestión de riesgos ha sido correcta:
+
+\begin{itemize}
+    \item \textbf{ex\_stalls = 3}: Este contador refleja los ciclos exactos en los que el procesador estuvo congelado globalmente por la señal \texttt{stall\_mips}. Coincide con el tiempo que la unidad MAC necesitó para completar la instruccion antes de liberar la ALU.
+    \item \textbf{control\_stalls = 1}: Registra el salto efectivo realizado por la instrucción \texttt{BEQ}. Esto confirma que, a pesar de la parada previa por la MAC, la lógica de saltos se activó correctamente en cuanto el procesador reanudó la marcha.
+    \item \textbf{kill\_if = 1}: Indica que la instrucción que entró por error en el \textit{fetch} (\texttt{0x28}) fue eliminada, evitando que se ejecutara tras el salto.
+    \item \textbf{Registro R12 = 6049}: Es la prueba definitiva de la integridad de los datos. El valor \texttt{6049} generado por la MAC en la etapa de memoria fue capturado correctamente por la instrucción \texttt{ADD R12, R10, R0} en su etapa de ejecución. Esto valida que el hardware de \textit{forwarding} y la sincronización de las etapas funcionan incluso cuando hay paradas estructurales de por medio.
+\end{itemize}
+
+Esta correspondencia entre los contadores y las señales de control demuestra que el procesador no solo ejecuta las instrucciones, sino que monitoriza y gestiona las paradas de forma eficiente, sin introducir ciclos de penalización innecesarios más allá de los estrictamente requeridos por el hardware.
+
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Instrucción} & \textbf{C1} & \textbf{C2} & \textbf{C3} & \textbf{C4} & \textbf{C5} & \textbf{C6} & \textbf{C7} & \textbf{C8} & \textbf{C9} & \textbf{C10} & \textbf{C11} \\ \hline
+0x20: MAC\_INI       & F & D & E1 & E2 & E3 & M & W &   &   &   &   \\ \hline
+0x24: BEQ (Salto)    &   & F & D* & D* & D* & D & E & M & W &   &   \\ \hline
+0x28: ADD (KILL)     &   &   & F* & F* & F* & \textcolor{red}{F} &  &  &  &  &   \\ \hline
+0x100: ADD TARGET    &   &   &    &    &    &   & F & D & E & M & W \\ \hline
+\end{tabular}%
+}
+\caption{Cronograma del pipeline. \textbf{E1-E3} representan los ciclos de la MAC, \textbf{D*} el stall estructural y \textcolor{red}{F} el ciclo de Kill.}
+\end{table}
+
+\paragraph{Conclusiones}
+El test \texttt{mac\_beq} confirma que el diseño es capaz de entrelazar riesgos estructurales y de control sin errores. La jerarquía de señales de la UD es correcta, anteponiendo la finalización de instrucciones multiciclo a la resolución de saltos, lo que previene que el procesador entre en un estado inconsistente al intentar saltar mientras el camino de datos está bloqueado.
+
+
+
+%% -------------------------------------------------
+\section{RF6 -- Cambio a modo excepción}
+% -------------------------------------------------
+
+\subsection{Descripción del Mecanismo de Excepción}
+El procesador está diseñado para interrumpir su flujo normal ante eventos críticos: interrupciones externas (\textbf{IRQ}), accesos inválidos a memoria (\textbf{Data Abort}) o instrucciones no reconocidas (\textbf{UNDEF}). El componente \texttt{Exception\_manager} centraliza esta lógica, asegurando que el cambio de modo sea atómico y seguro.
+
+A nivel arquitectónico, este requisito no se limita a un simple salto a una rutina de servicio. El hardware debe:
+\begin{itemize}
+    \item detectar la causa de la excepción en la etapa adecuada del \textit{pipeline},
+    \item inhibir la aceptación de nuevas excepciones mientras el procesador ya está en modo excepción,
+    \item guardar una dirección de retorno coherente en \texttt{Exception\_LR},
+    \item redirigir el \texttt{PC} al vector correcto de la tabla de excepciones,
+    \item y limpiar el cauce para impedir que se comprometan instrucciones inválidas o parcialmente ejecutadas.
+\end{itemize}
+
+En esta implementación, la tabla de vectores ocupa las cuatro primeras palabras de la memoria de instrucciones, por lo que las entradas relevantes para este requisito son:
+\begin{itemize}
+    \item \textbf{0x00000004}: vector de \texttt{IRQ},
+    \item \textbf{0x00000008}: vector de \texttt{Data Abort},
+    \item \textbf{0x0000000C}: vector de \texttt{UNDEF}.
+\end{itemize}
+
+\subsection{Lógica de Aceptación y Control}
+La aceptación de una excepción no es inmediata; depende del estado del procesador, se deben cumplir tres condiciones simultáneas:
+\begin{enumerate}
+    \item \textbf{Detección de evento:} Activación de las señales \texttt{IRQ}, \texttt{Data\_abort} (en etapa MEM) o \texttt{UNDEF} (en etapa ID) y tanto para UNDEF como para Data abort la instruccion debe tener el bit de validez.
+    
+    \item \textbf{Habilitación:} El bit de estado \texttt{MIPS\_status(1)} debe ser '0' \\ (excepciones habilitadas).
+    \item \textbf{Disponibilidad:} El procesador no debe estar en un estado de parada \\ (\texttt{stall\_MIPS = '0'}).
+    \\
+\end{enumerate}
+
+\begin{lstlisting}[language=VHDL, caption=Lógica de aceptación de excepciones en Exception\_manager]
+Exception_accepted_internal <= '1' when (
+    ((IRQ = '1') or 
+     ((Data_abort = '1') and (valid_I_MEM = '1')) or 
+     ((UNDEF = '1') and (valid_I_ID = '1'))) 
+    AND (MIPS_status(1)='0') AND (stall_MIPS = '0')
+) else '0';
+\end{lstlisting}
+
+Esta expresión deja ver dos ideas clave del diseño:
+\begin{itemize}
+    \item \textbf{La excepción solo se acepta si la instrucción causante es válida.} Esto evita, por ejemplo, que se procese un \texttt{UNDEF} perteneciente a una instrucción que ya ha sido anulada por un salto o por una excepción previa.
+    \item \textbf{El procesador no entra en modo excepción durante un \texttt{stall\_MIPS}.} De este modo se evita capturar estados intermedios de una instrucción multiciclo o de una operación que aún no ha finalizado.
+\end{itemize}
+
+\subsection{Prioridad entre causas de excepción}
+Aunque la señal de aceptación es común, el \textit{datapath} distingue entre varias causas a la hora de seleccionar el siguiente \texttt{PC}. La prioridad observada en el procesador es la siguiente:
+\begin{enumerate}
+    \item \textbf{Data Abort} $\rightarrow$ salto al vector \texttt{0x00000008}
+    \item \textbf{UNDEF} $\rightarrow$ salto al vector \texttt{0x0000000C}
+    \item \textbf{IRQ} $\rightarrow$ salto al vector \texttt{0x00000004}
+\end{enumerate}
+
+Esta prioridad tiene sentido porque los errores síncronos asociados a la instrucción en curso (\texttt{Data Abort} y \texttt{UNDEF}) deben prevalecer sobre un evento externo asíncrono como \texttt{IRQ}. Así se garantiza que el procesador trate primero la causa más directamente vinculada al estado actual del cauce.
+
+\subsection{Gestión del PC y Punto de Retorno (LR)}
+Al aceptarse la excepción, el pipeline debe salvar la dirección de la instrucción interrumpida para poder reanudar el programa más tarde. Esta dirección se almacena en el \textbf{Exception\_LR}. 
+\newpage
+La lógica de selección de la dirección de retorno (\texttt{Return\_I}) sigue una prioridad basada en la validez de las instrucciones en el \textit{pipeline}:
+\begin{itemize}
+    \item \textbf{Prioridad 1:} Si la instrucción en EX es válida (y no es un \texttt{RTE}), se guarda \texttt{PC\_exception\_EX}.
+    \item \textbf{Prioridad 2:} Si la anterior no es válida pero la de ID sí, se guarda \texttt{PC\_exception\_ID}.
+    \item \textbf{Por defecto:} Se guarda el valor actual de \texttt{PC\_out}.
+\end{itemize}
+
+Simultáneamente, el registro de estado (\texttt{status\_reg}) cambia a \texttt{"11"}, lo que indica que el procesador ha entrado en \textbf{Modo Excepción} y las interrupciones quedan deshabilitadas para evitar reentradas anidadas no controladas.
+
+\subsection{Limpieza del \textit{pipeline} y cambio de contexto}
+La entrada en modo excepción implica también una limpieza inmediata del cauce. En el diseño implementado, esta limpieza se consigue invalidando las etapas tempranas y forzando que las instrucciones que habían sido cargadas especulativamente no lleguen a comprometerse. Esta decisión es especialmente importante en los casos de \texttt{UNDEF} y \texttt{Data Abort}, donde la instrucción problemática no debe dejar ningún efecto arquitectónico parcial.
+
+\begin{itemize}
+    \item En un \textbf{UNDEF}, la instrucción errónea se detecta en \texttt{ID}, por lo que deben limpiarse las etapas anteriores y redirigir el flujo inmediatamente al vector \texttt{0x0C}.
+    \item En un \textbf{Data Abort}, el error se detecta en \texttt{MEM}, lo que obliga a invalidar el resto del cauce y redirigir el control al vector \texttt{0x08}.
+    \item En una \textbf{IRQ}, aunque el evento sea asíncrono, el cambio de contexto sigue el mismo protocolo: salvado del punto de retorno, actualización del estado y salto al vector \texttt{0x04}.
+\end{itemize}
+
+\subsection{Verificación en Simulación}
+La validación de este requisito se ha planteado cubriendo las tres causas de entrada en modo excepción. Para ello se utilizan los programas de prueba definidos en:
+\begin{itemize}
+    \item \texttt{roms/roms\_Interrupciones/RAM\_I\_irq.vhd}
+    \item \texttt{roms/roms\_Interrupciones/RAM\_I\_data\_abort\_unaligned.vhd}
+    \item \texttt{roms/roms\_Interrupciones/RAM\_I\_data\_abort\_oob.vhd}
+    \item \texttt{roms/roms\_Interrupciones/RAM\_I\_undef.vhd}
+\end{itemize}
+
+\paragraph{Caso 1: IRQ externa}
+El test \texttt{RAM\_I\_irq.vhd} verifica el comportamiento nominal de entrada en modo excepción ante una interrupción externa. En él se espera observar:
+\begin{itemize}
+    \item \textbf{Entrada en modo excepción:} Se observa que cuando \texttt{IRQ} sube a '1', el PC salta automáticamente a la dirección \texttt{0x00000004} en el siguiente ciclo.
+    \item \textbf{Salvado de contexto:} Se comprueba que el registro \texttt{Exception\_LR\_output} captura la dirección de la instrucción que estaba en la etapa EX en el momento de la interrupción.
+    \item \textbf{Inhibición:} Se verifica que si llega una segunda \texttt{IRQ} mientras el procesador ya está en modo excepción (\texttt{status = "11"}), esta es ignorada hasta que se ejecute una instrucción \texttt{RTE}.
+\end{itemize}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf6_irq_vector.png}
+    \caption{Test \texttt{RAM\_I\_irq.vhd}. Salto al vector de excepción \texttt{0x04} al aceptarse una \texttt{IRQ}.}
+    \label{fig:rf6_irq_vector}
+\end{figure}
+Esta captura muestra la aceptación de una interrupción externa. En el instante señalado, la señal \texttt{irq} se encuentra activa y el gestor de excepciones responde poniendo \texttt{exception\_accepted = 1}. Como consecuencia, el multiplexor del contador de programa selecciona el vector de interrupción y se observa \texttt{pc\_in = 0x00000004}, mientras que \texttt{pc\_out} todavía contiene la dirección de la instrucción que estaba ejecutándose en el programa principal. La simulación confirma, por tanto, que el procesador abandona el flujo normal y entra correctamente en la rutina de excepción asociada a \texttt{IRQ}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf6_irq_lr.png}
+    \caption{Test \texttt{RAM\_I\_irq.vhd}. Captura de \texttt{Exception\_LR\_output} y cambio de estado al entrar en modo excepción.}
+    \label{fig:rf6_irq_lr}
+\end{figure}
+Esta captura muestra el salvado del punto de retorno tras la aceptación de la interrupción. Después del ciclo en el que se activa \texttt{exception\_accepted}, el registro \texttt{Exception\_LR\_output} carga el valor \texttt{0x00000024}, que corresponde a la dirección a la que deberá reanudarse el programa una vez finalice la rutina de servicio. La simulación confirma así que el cambio a modo excepción no solo redirige el \texttt{PC} al vector de interrupción, sino que también preserva correctamente el contexto necesario para el retorno posterior.
+
+\paragraph{Caso 2: Data Abort por acceso desalineado}
+El test \texttt{RAM\_I\_data\_abort\_unaligned.vhd} provoca un \texttt{LW} a una dirección no alineada. Este escenario es útil porque fuerza una excepción síncrona detectada en la etapa MEM. La verificación debe confirmar:
+\begin{itemize}
+    \item activación de \texttt{Data\_abort} en el ciclo del acceso inválido,
+    \item aceptación de la excepción solo si la instrucción en MEM es válida,
+    \item salto del \texttt{PC} al vector \texttt{0x08},
+    \item y posterior entrada en la rutina de \textit{abort} situada en la zona \texttt{@180}.
+\end{itemize}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf6_abort_unaligned.png}
+    \caption{Test \texttt{RAM\_I\_data\_abort\_unaligned.vhd}. Activación de \texttt{Data Abort} por acceso desalineado y salto al vector \texttt{0x08}.}
+    \label{fig:rf6_abort_unaligned}
+\end{figure}
+Esta captura muestra la detección de un \texttt{Data Abort} provocado por un acceso desalineado. En el instante señalado, la dirección calculada para memoria es \texttt{addr = 0x00000003}, valor no alineado para una operación de palabra, por lo que la etapa MEM activa \texttt{data\_abort = 1}. El gestor de excepciones acepta entonces el evento (\texttt{exception\_accepted = 1}) y redirige el flujo cargando \texttt{pc\_in = 0x00000008}, correspondiente al vector de \texttt{Data Abort}. La simulación confirma así que el procesador detecta correctamente el fallo de alineación y abandona la ejecución normal para entrar en la rutina de tratamiento.
+
+\paragraph{Caso 3: Data Abort por acceso fuera de rango}
+El test \texttt{RAM\_I\_data\_abort\_oob.vhd} fuerza un acceso inválido a una dirección fuera del rango previsto por el sistema. Aunque el síntoma externo vuelve a ser un \texttt{Data Abort}, este segundo test resulta útil porque demuestra que la lógica de cambio a modo excepción no depende de una única causa concreta, sino del protocolo común de abort en MEM.
+
+\begin{itemize}
+    \item El \texttt{PC} debe redirigirse igualmente al vector \texttt{0x08}.
+    \item \texttt{Exception\_LR\_output} debe guardar la dirección de retorno correspondiente a la instrucción que causó el fallo.
+    \item La rutina de tratamiento debe terminar en el bucle de seguridad sin ejecutar la instrucción defectuosa.
+\end{itemize}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf6_abort_oob.png}
+    \caption{Test \texttt{RAM\_I\_data\_abort\_oob.vhd}. Cambio a modo excepción ante un acceso inválido fuera de rango.}
+    \label{fig:rf6_abort_oob}
+\end{figure}
+La captura muestra la secuencia completa asociada a un \texttt{Data Abort} por acceso inválido. En primer lugar, la etapa de memoria detecta el fallo y activa \texttt{data\_abort = 1}, lo que provoca la aceptación de la excepción (\texttt{exception\_accepted = 1}) y la redirección del flujo hacia el vector \texttt{0x00000008}, observable en \texttt{pc\_in}. A continuación, ya dentro de la rutina de tratamiento, el sistema alcanza la zona de código de \textit{abort} y presenta en el puerto de salida el valor \texttt{0x00000AB0}, que actúa como código de diagnóstico. La simulación confirma así tanto la detección del fallo como la llegada correcta a la rutina de error.
+
+\paragraph{Caso 4: Instrucción no definida (UNDEF)}
+El test \texttt{RAM\_I\_undef.vhd} introduce explícitamente la palabra \texttt{0xFFFFFFFF} en la zona de código del programa principal. La excepción debe detectarse ya en la etapa ID, sin permitir que la instrucción avance hacia etapas posteriores del cauce.
+
+\begin{itemize}
+    \item Se debe activar la señal \texttt{undef} durante la decodificación de la instrucción inválida.
+    \item \texttt{exception\_accepted} debe provocar el salto del \texttt{PC} al vector \texttt{0x0C}.
+    \item Las instrucciones cargadas especulativamente deben anularse mediante la limpieza de bits de validez.
+    \item El flujo debe continuar en la rutina de \textit{undef} situada en la zona \texttt{@1C0}.
+\end{itemize}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf6_undef.png}
+    \caption{Test \texttt{RAM\_I\_undef.vhd}. Detección de instrucción no reconocida y salto al vector \texttt{0x0C}.}
+    \label{fig:rf6_undef}
+\end{figure}
+Esta captura muestra la detección de una instrucción no definida. En el instante señalado, la etapa de decodificación contiene la palabra \texttt{ir\_id = 0xFFFFFFFF}, que no pertenece al repertorio de instrucciones soportado por el procesador. Como la instrucción es válida (\texttt{valid\_i\_id = 1}), la lógica de control activa \texttt{undef = 1} y el gestor de excepciones responde con \texttt{exception\_accepted = 1}. Como consecuencia, el contador de programa carga \texttt{pc\_in = 0x0000000C}, correspondiente al vector de \texttt{UNDEF}. La simulación confirma así que el procesador detecta correctamente códigos no reconocidos y abandona la ejecución normal de forma segura.
+
+\paragraph{Observación sobre el estímulo de IRQ}
+En el banco de pruebas general, la generación automática de \texttt{EXT\_IRQ} está preparada pero comentada. Por ello, para documentar correctamente el caso \texttt{IRQ} será necesario asegurarse de ejecutar la simulación con el estímulo externo habilitado o con un entorno equivalente que fuerce esa señal. Este matiz no afecta a los tests de \texttt{Data Abort} y \texttt{UNDEF}, que se disparan de forma interna a partir del propio flujo del programa.
+
+\paragraph{Conclusiones}
+El requisito RF6 queda satisfecho si el procesador demuestra que puede abandonar el modo usuario de forma controlada y consistente ante cualquiera de las tres causas de excepción soportadas. Las simulaciones previstas cubren tanto eventos asíncronos (\texttt{IRQ}) como errores síncronos en distintas etapas del cauce (\texttt{UNDEF} en ID y \texttt{Data Abort} en MEM), lo que permite validar no solo el salto al vector correcto, sino también el salvado del punto de retorno y la limpieza segura del \textit{pipeline}.
+
+
+
+
+% -------------------------------------------------
+\section{RF7 -- Retorno a modo usuario con RTE}
+% -------------------------------------------------
+
+\subsection{Análisis RTL de la instrucción RTE}
+La instrucción \codigo{RTE} (\textit{Return from Exception}) es el mecanismo hardware que permite restaurar el flujo del programa interrumpido. A diferencia de un salto convencional, esta instrucción debe restaurar tanto el contador de programa como el estado del sistema. 
+
+Las operaciones a nivel RTL son:
+\begin{itemize}
+    \item \textbf{Restauración del flujo:} $PC \leftarrow Exception\_LR$
+    \item \textbf{Cambio de privilegios:} $Status\_Reg \leftarrow "00"$ (Modo Usuario / Interrupciones habilitadas)
+    \item \textbf{Limpieza del cauce:} $valid\_I\_IF \leftarrow '0'$ (Anulación de la instrucción en \textit{Fetch})
+\end{itemize}
+
+El punto clave de esta instrucción es que no devuelve simplemente el control a una dirección prefijada, sino que reutiliza el contexto guardado por el \texttt{Exception\_manager} al aceptar la excepción previa. Por tanto, la corrección de \codigo{RTE} depende directamente de que el requisito RF6 haya almacenado correctamente el valor de \texttt{Exception\_LR\_output}.
+
+\subsection{Gestión del PC y el Estado en el Pipeline}
+Cuando la Unidad de Control (UC) decodifica un \codigo{RTE} en la etapa ID, se activan los siguientes mecanismos hardware:
+
+\begin{itemize}
+    \item \textbf{Multiplexor del PC:} El multiplexor de la etapa \textit{Fetch} (etapa IF) selecciona como próxima dirección el valor almacenado en el registro \texttt{Exception\_LR\_output}. Esta ruta de datos es crítica, ya que el valor debe estar disponible en ID para actualizar el PC en el siguiente ciclo.
+    
+    \item \textbf{Actualización del Status Reg:} La señal \codigo{RTE\_ID} se envía al \texttt{Exception\_manager}. Si la instrucción es válida y el procesador no está en \textit{stall}, se carga el valor \texttt{"00"} en el registro de estado, lo que reasigna al procesador el \textbf{Modo Usuario} y habilita de nuevo la recepción de \codigo{IRQ}.
+    
+    \item \textbf{Gestión de Riesgos de Control:} Al ser un salto de retorno, la Unidad de Detención (UD) activa \codigo{Kill\_IF}. Esto invalida la instrucción que se estaba buscando en memoria mientras el \codigo{RTE} se decodificaba, evitando la ejecución de código fuera de la rutina de excepción.
+\end{itemize}
+
+\subsection{Interacción con el \texttt{Exception\_manager}}
+La lógica de estado del gestor de excepciones trata \codigo{RTE} como el evento simétrico a la entrada en excepción. En el hardware implementado, el registro de estado se actualiza cuando:
+\begin{itemize}
+    \item se acepta una excepción, en cuyo caso se carga \texttt{"11"},
+    \item o bien cuando en \texttt{ID} aparece una instrucción \codigo{RTE} válida y el procesador no está en \textit{stall}, en cuyo caso se carga \texttt{"00"}.
+\end{itemize}
+
+Esta política garantiza dos propiedades importantes:
+\begin{enumerate}
+    \item \textbf{Rehabilitación de excepciones.} Tras el \codigo{RTE}, el sistema vuelve a modo usuario y puede aceptar nuevas \texttt{IRQ} o excepciones posteriores.
+    \item \textbf{Retorno limpio del flujo.} El valor de \texttt{Exception\_LR\_output} ya no se interpreta como un dato de depuración, sino como la dirección efectiva de continuación del programa principal.
+\end{enumerate}
+
+\subsection{Consideraciones de cauce}
+Desde el punto de vista del \textit{pipeline}, \codigo{RTE} se comporta como un salto de control resuelto tempranamente en \texttt{ID}. Esto implica:
+\begin{itemize}
+    \item la instrucción siguiente ya ha podido entrar en \texttt{IF} cuando se decide el retorno,
+    \item por ello la señal \texttt{Kill\_IF} debe activarse para eliminar esa instrucción especulativa,
+    \item y el nuevo \texttt{PC} debe cargarse con \texttt{Exception\_LR\_output} sin esperar a etapas posteriores.
+\end{itemize}
+
+Este detalle es importante porque diferencia a \codigo{RTE} de una simple escritura en el \texttt{PC}: además de restaurar la dirección, el hardware debe asegurar que no se ejecute ninguna instrucción residual perteneciente todavía a la rutina de excepción.
+
+
+\subsection{Verificación en \texttt{test\_rte}}
+Se ha validado el
+retorno correcto mediante el banco de pruebas \texttt{test\_rte}, diseñado específicamente para aislar el comportamiento de \codigo{RTE} sin mezclarlo con el flujo completo de \texttt{IRQ + Data Abort} del programa más grande:
+
+\begin{itemize}
+    \item \textbf{Prólogo y Epílogo:} Se verifica mediante software que la rutina de servicio salva y restaura el contexto antes de ejecutar \codigo{RTE}. En el programa de prueba se utiliza un registro general como puntero de pila para conservar temporalmente el estado visible del programa principal.
+    \item \textbf{Persistencia de Datos:} Se confirma que, tras ejecutar el \codigo{RTE}, el programa principal retoma el cálculo exactamente en la instrucción donde fue interrumpido, con los registros en su estado original.
+    \item \textbf{Restauración de control:} Se comprueba que el \texttt{PC} recupera el valor contenido en \texttt{Exception\_LR\_output} y que la instrucción en \textit{fetch} perteneciente todavía a la rutina de excepción es invalidada mediante \texttt{Kill\_IF}.
+\end{itemize}
+
+Este punto es importante desde el punto de vista experimental: aunque \texttt{RAM\_I\_irq.vhd} incluye una \codigo{RTE} dentro de su ISR, ese programa continúa posteriormente hacia un \texttt{Data Abort} intencionado, lo que dificulta aislar con claridad la captura del retorno. Por ese motivo, para RF7 resulta más apropiado el test específico \texttt{RAM\_I\_test\_rte.vhd}, cuya ISR contiene una \codigo{RTE} limpia en la palabra 66 y vuelve directamente al bucle principal.
 
 \subsubsection*{Verificación}
-Comprobar su correcto funcionamiento en un banco de pruebas.
+La comprobación experimental de \codigo{RTE} debe centrarse en tres aspectos:
+\begin{enumerate}
+    \item que el valor cargado en \texttt{pc\_in} durante el retorno coincide con \texttt{Exception\_LR\_output},
+    \item que la instrucción especulativa en \texttt{IF} es anulada por \texttt{Kill\_IF},
+    \item y que el procesador abandona efectivamente el modo excepción, quedando preparado para aceptar interrupciones posteriores.
+\end{enumerate}
 
-\paragraph{Título del test:} \pendiente
+Para esta verificación se ha utilizado el comando \texttt{./ejecutar\_mips.sh test\_rte}, que carga la ROM de instrucciones \texttt{RAM\_I\_test\_rte.vhd} y la RAM de datos \texttt{RAM\_D\_irq.vhd}. Sobre esta base se han capturado tres momentos representativos: restauración del \texttt{PC}, activación de \texttt{Kill\_IF} y reanudación del flujo principal.
 
-\paragraph{Ficheros RAM usados:}
-\begin{itemize}[leftmargin=1.2cm]
-    \item RAM de instrucciones: \pendiente
-    \item RAM de datos: \pendiente
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf7_rte_pc.png}
+    \caption{Test \texttt{RAM\_I\_test\_rte.vhd}. La instrucción \texttt{RTE} restaura el \texttt{PC} a partir de \texttt{Exception\_LR\_output}.}
+    \label{fig:rf7_rte_pc}
+\end{figure}
+
+Esta captura muestra el retorno efectivo desde la rutina de excepción mediante la instrucción \texttt{RTE}. En el instante señalado, \texttt{rte\_id = 1} y la instrucción es válida (\texttt{valid\_i\_id = 1}), por lo que el multiplexor del contador de programa selecciona el valor almacenado en \texttt{Exception\_LR\_output}. Se observa así que \texttt{pc\_in = 0x00000028}, coincidiendo exactamente con \texttt{exception\_lr\_output = 0x00000028}. La simulación confirma, por tanto, que \texttt{RTE} restaura correctamente la dirección de retorno y devuelve el control al programa principal.
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf7_rte_killif.png}
+    \caption{Test \texttt{RAM\_I\_test\_rte.vhd}. Activación de \texttt{Kill\_IF} al resolverse \texttt{RTE} en la etapa ID.}
+    \label{fig:rf7_rte_killif}
+\end{figure}
+
+Esta captura muestra la gestión del riesgo de control asociado a \texttt{RTE}. En el instante señalado, la instrucción de retorno está activa en decodificación (\texttt{rte\_id = 1}) y la Unidad de Detención responde activando \texttt{kill\_if = 1}. Como consecuencia, la instrucción que estaba entrando en \textit{fetch} queda invalidada, lo que se refleja en \texttt{valid\_i\_if = 0}. De este modo, el procesador evita ejecutar una instrucción especulativa perteneciente todavía a la rutina de excepción mientras el \texttt{PC} se redirige hacia \texttt{Exception\_LR\_output}.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf7_rte_estado.png}
+    \caption{Test \texttt{RAM\_I\_test\_rte.vhd}. Evidencia del retorno a modo normal tras la ejecución de \texttt{RTE}.}
+    \label{fig:rf7_rte_estado}
+\end{figure}
+
+Esta captura muestra el estado del procesador una vez completado el retorno por \texttt{RTE}. En este instante ya no se está aceptando ninguna nueva excepción (\texttt{exception\_accepted = 0}) y la instrucción de retorno ha abandonado la etapa ID (\texttt{rte\_id = 0}). Además, el contador de programa vuelve a recorrer el flujo del programa principal, mientras \texttt{exception\_lr\_output} conserva la dirección de retorno previamente utilizada. La imagen confirma, por tanto, que tras ejecutar \texttt{RTE} el procesador reanuda la ejecución normal del código interrumpido.
+
+
+
+
+\newpage
+% -------------------------------------------------
+\section{RF8 -- ALU multiciclo}
+% -------------------------------------------------
+
+
+\subsection{Descripción de la Unidad MAC}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image.png}
+    \caption{FSM de ALU multiciclo}
+    \label{fig:rf7_rte_estado}
+\end{figure}
+
+
+Para optimizar el camino crítico del procesador, se ha transformado la unidad (MAC) de un diseño combinacional a uno \textbf{multiciclo}. Esta unidad procesa operandos de 32 bits interpretados como vectores de cuatro elementos de 8 bits cada uno, realizando el sumatorio de sus productos e integrándolo en un registro acumulador interno (\texttt{ACC\_reg}).
+
+\subsection{Diseño de la Máquina de Estados (FSM)}
+La ALU utiliza una máquina de estados finitos para segmentar la operación en \textbf{3 ciclos de latencia}. El control se basa en la señal \texttt{is\_mac}, que se activa solo si la instrucción es válida en EX y el \texttt{ALUctrl} corresponde a \texttt{mac} o \texttt{mac\_ini}.
+
+\begin{itemize}
+    \item \textbf{Estado IDLE:} Estado de reposo. Si \texttt{is\_mac} se activa, se capturan los operandos y se realizan las 4 multiplicaciones de 8 bits en paralelo, almacenando los resultados en registros de 16 bits (\texttt{prod\_reg}).
+    \item \textbf{Estado PROD:} Se realiza la suma de los productos parciales por parejas, guardando el resultado en registros intermedios (\texttt{sum\_reg}).
+    \item \textbf{Estado SUM:} Se realiza la suma final de los resultados anteriores. Dependiendo de si la instrucción es \texttt{mac\_ini} (limpia el acumulador) o \texttt{mac} (acumulación interna), se actualiza el registro \texttt{ACC\_reg}.
+    \item \textbf{Estado ACC:} Ciclo final donde el dato ya es estable en el acumulador y se permite la transición de vuelta a IDLE.
 \end{itemize}
 
-\paragraph{Código ensamblador representativo}
-\begin{lstlisting}
-# Pegar aquí el código del test de jal / ret
-\end{lstlisting}
 
-\paragraph{Comentario del test}
-Explicar qué se comprueba y por qué demuestra el funcionamiento correcto.
 
-\vspace{0.3cm}
-\noindent\pendiente
-
-% -------------------------------------------------
-\subsection{RF2 -- Anticipación de operandos}
-% -------------------------------------------------
-
-\subsubsection*{Descripción}
-El procesador es capaz de anticipar los operandos para las instrucciones \codigo{lw}, \codigo{sw} y aritméticas a distancia 1
-(siempre que el dato a anticipar no venga de un \codigo{lw}) y a distancia 2.
-
-\subsubsection*{¿Cómo?}
-Explicar brevemente la gestión de anticipación de operandos:
-\begin{itemize}[leftmargin=1.2cm]
-    \item dónde está la unidad de forwarding,
-    \item qué señales observa,
-    \item qué multiplexores controla,
-    \item qué casos se contemplan para \codigo{rs} y \codigo{rt}.
+\subsection{Entradas, Salidas y Señales de Control}
+\begin{itemize}
+    \item \textbf{Entradas:} \texttt{DA, DB} (Operandos), \texttt{ALUctrl} (Selección de operación), \texttt{valid\_I\_EX} (Validez de la instrucción) y \texttt{clk/reset}.
+    \item \textbf{Salida \texttt{ready}:} Es la señal clave para la Unidad de Detención (UD). Se mantiene a '0' durante los estados de cálculo, forzando un \texttt{stall\_MIPS} que congela el \textit{pipeline} hasta que el resultado es válido.
+    \item \textbf{Salida \texttt{Dout}:} En el caso de operaciones MAC, el multiplexor de salida de la ALU selecciona el contenido del registro \texttt{ACC\_reg}.
 \end{itemize}
 
-\vspace{0.3cm}
-\noindent\pendiente
+\subsection{Gestión del registro ACC ante excepciones}
+El registro \texttt{ACC} representa un \textbf{estado arquitectónico} adicional al Banco de Registros. Ante una excepción (IRQ, Undef, etc.), se debe garantizar su integridad si la rutina de excepción también utiliza instrucciones MAC.
+
+\begin{itemize}
+    \item \textbf{Gestión Hardware:} El acumulador se comporta como un registro global. El hardware no lo salva automáticamente en el \texttt{Exception\_LR}.
+    \item \textbf{Propuesta de Gestión Software:} Para evitar la corrupción del acumulador en ejecuciones entrelazadas, la rutina de servicio de interrupción (ISR) debe seguir un esquema de salvado/restauración. Dado que no existe una instrucción directa \textit{"Move from ACC to Reg"}, se puede simular sumando el acumulador con cero (\texttt{mac}) y guardando el resultado en un registro general para luego subirlo a la pila, restaurándolo antes del \texttt{RTE}.
+\end{itemize}
+
+\subsection{Verificación}
+La validación de este requisito se ha realizado con dos bancos de prueba complementarios:
+\begin{itemize}
+    \item \texttt{RAM\_MAC.vhd}, ejecutado con \texttt{./ejecutar\_mips.sh mac\_multiciclo}, para comprobar la latencia, la FSM y la interacción con \texttt{stall\_MIPS}.
+    \item \texttt{RAM\_MAC\_OVERFLOW.vhd}, ejecutado con \texttt{./ejecutar\_mips.sh mac\_overflow}, para comprobar el comportamiento aritmético del acumulador ante valores extremos y acumulación sucesiva.
+\end{itemize}
+
+\subsubsection*{Caso 1: Latencia y FSM multiciclo}
+El test \texttt{RAM\_MAC.vhd} es el más adecuado para demostrar que la operación MAC ya no se resuelve en un único ciclo, sino mediante una secuencia interna de estados. La evidencia experimental debe mostrar:
+\begin{enumerate}
+    \item que \texttt{ready} cae a '0' cuando una instrucción \texttt{MAC} o \texttt{MAC\_INI} entra en EX,
+    \item que la UD responde activando \texttt{stall\_MIPS} durante los ciclos de cálculo,
+    \item y que el dato solo se considera válido al llegar al estado \texttt{ACC}, cuando \texttt{ready} vuelve a '1'.
+\end{enumerate}
+
+Para este caso se ha utilizado el comando \texttt{./ejecutar\_mips.sh mac\_multiciclo}, que selecciona la ROM de instrucciones \texttt{RAM\_MAC.vhd} y la RAM de datos \texttt{RAM\_D\_default.vhd}. Las capturas asociadas muestran, por un lado, la latencia multiciclo y la activación de \texttt{stall\_MIPS}, y por otro la actualización correcta del acumulador y de los registros destino.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf8_mac_fsm.png}
+    \caption{Test \texttt{RAM\_MAC.vhd}. Latencia multiciclo de \texttt{MAC} y activación de \texttt{stall\_MIPS} mientras la ALU completa la operación.}
+    \label{fig:rf8_mac_fsm}
+\end{figure}
+
+Esta captura muestra el comportamiento multiciclo de la unidad MAC. En el instante señalado, la señal \texttt{alu\_ready} vale \texttt{0}, indicando que la ALU todavía no ha completado la operación. Como consecuencia, la Unidad de Detención activa \texttt{stall\_mips = 1} y el contador de programa queda congelado en \texttt{pc\_out = 0x00000028}. La simulación confirma así que la instrucción MAC no se resuelve en un único ciclo, sino que introduce una latencia real controlada por la FSM interna de la ALU.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf8_mac_acc.png}
+    \caption{Test \texttt{RAM\_MAC.vhd}. Actualización del acumulador y resultados finales de \texttt{MAC\_INI}/\texttt{MAC}.}
+    \label{fig:rf8_mac_acc}
+\end{figure}
+
+Esta captura muestra la evolución correcta del acumulador interno de la ALU multiciclo. Tras la ejecución de \texttt{MAC\_INI}, se observa la escritura del valor \texttt{0x000017A1} en \texttt{R10}, correspondiente al primer resultado acumulado. Posteriormente, la instrucción \texttt{MAC} realiza una nueva acumulación y el valor final pasa a \texttt{0x00002F42}, visible tanto en \texttt{acc\_reg} como en \texttt{R11}. La simulación confirma así que la unidad no solo introduce latencia multiciclo, sino que además conserva y actualiza correctamente el acumulador entre operaciones consecutivas.
+
+
+\subsubsection*{Caso 2: Acumulación y valores extremos}
+El test \texttt{RAM\_MAC\_OVERFLOW.vhd} fuerza el uso de operandos muy grandes cargados desde memoria de datos, con el objetivo de observar el comportamiento del acumulador tras varias acumulaciones consecutivas. En este escenario no interesa tanto el protocolo de parada, ya validado en el caso anterior, como la corrección funcional del dato producido por la ALU multiciclo.
+
+\begin{itemize}
+    \item Se cargan valores extremos en registros fuente antes de las instrucciones \texttt{MAC\_INI} y \texttt{MAC}.
+    \item El acumulador se inicializa con la primera operación y se actualiza en las siguientes acumulaciones.
+    \item La salida de la ALU debe reflejar el resultado acumulado final, incluso cuando cambian el signo o la magnitud del resultado intermedio.
+\end{itemize}
+
+Para esta segunda comprobación se ha utilizado el comando \texttt{./ejecutar\_mips.sh mac\_overflow}, que carga la ROM \texttt{RAM\_MAC\_OVERFLOW.vhd} sobre la RAM de datos \texttt{RAM\_D\_default.vhd}. La figura correspondiente se centra en la evolución de \texttt{ACC\_reg}, en el dato escrito por \texttt{BusW} y en el resultado final almacenado en el banco de registros.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf8_mac_overflow.png}
+    \caption{Test \texttt{RAM\_MAC\_OVERFLOW.vhd}. Comportamiento del acumulador ante acumulaciones sucesivas con operandos de gran magnitud.}
+    \label{fig:rf8_mac_overflow}
+\end{figure}
+
+Esta captura muestra el comportamiento del acumulador interno ante operandos de gran magnitud y varias acumulaciones consecutivas. Se observa que \texttt{acc\_reg} evoluciona por valores negativos en complemento a dos, y que el resultado escrito en el banco de registros coincide con el valor presente en la salida de escritura (\texttt{busW = 0xFFFFEC80}, \texttt{reg\_file[1] = 0xFFFFEC80}). Más que una detección explícita de \textit{overflow}, el test valida que la ALU multiciclo mantiene un comportamiento aritmético coherente cuando se trabaja en condiciones extremas y con acumulación sucesiva.
+
+
+\paragraph{Conclusiones}
+RF8 queda validado si las simulaciones demuestran simultáneamente dos propiedades: por un lado, que la operación \texttt{MAC} introduce una latencia real de varios ciclos gestionada por una FSM interna y coordinada con \texttt{stall\_MIPS}; por otro, que el acumulador interno mantiene un comportamiento aritmético coherente cuando se encadenan varias operaciones MAC sobre datos de magnitud elevada. De este modo se justifica tanto la microarquitectura multiciclo como su corrección funcional.
+
+
+%% -------------------------------------------------
+\section{RF9 -- Contadores de Rendimiento}
+% -------------------------------------------------
+
+\subsection{Descripción y Objetivos de Diseño}
+Los contadores  son módulos hardware dedicados a la recolección de estadísticas en tiempo real sobre el comportamiento del procesador. Su objetivo principal es permitir el cálculo de métricas de eficiencia, siendo la más relevante el \textbf{CPI (Ciclos por Instrucción)}. 
+
+En un procesador segmentado ideal, el objetivo es alcanzar un CPI de 1. Sin embargo, las dependencias de datos, los saltos y las limitaciones de los recursos (como la ALU multiciclo o la memoria lenta) introducen stalls en el pipeline que penalizan este valor. Los contadores implementados permiten ver estas penalizaciones para cuantificar qué porcentaje de pérdida de rendimiento es por cada tipo de riesgo:
+
+\begin{itemize}
+    \item \textbf{Análisis de Calidad:} Permiten verificar que las unidades de anticipación (UA) y detención (UD) funcionan.
+    \item \textbf{Cálculo de Métricas:} Facilitan la obtención del CPI real.
+    \item \textbf{Visibilidad de Riesgos:} Identifican  cuellos de botella del programa actual.
+\end{itemize}
+
+
+\subsection{Gestión de los Contadores y Jerarquía de Paradas}
+La gestión de los contadores se realiza en la arquitectura principal del MIPS. Para garantizar que las métricas sean precisas, se ha implementado una \textbf{jerarquía de prioridades}. Esta jerarquía asegura que un mismo ciclo de parada no se contabilice en dos categorías distintas simultáneamente.
+
+En la implementación final, la separación entre causas se realiza mediante las propias condiciones de habilitación de cada contador. En particular:
+\begin{itemize}
+    \item los \textbf{stalls de memoria} se cuentan cuando la memoria no está preparada para atender la operación actual,
+    \item los \textbf{stalls estructurales de EX} se cuentan cuando la ALU multiciclo mantiene \texttt{ALU\_ready = 0} y la memoria sí está disponible,
+    \item los \textbf{stalls de datos} y \textbf{de control} solo se contabilizan cuando no existe una parada global del procesador (\texttt{not(stall\_MIPS)}).
+\end{itemize}
+
+Por tanto, la jerarquía efectiva puede resumirse como:
+\begin{center}
+\textbf{Memoria / EX estructural $>$ Data Stall / Control Stall}
+\end{center}
+
+Esta formulación se ajusta mejor al hardware implementado que una prioridad lineal única, ya que \texttt{mem\_stalls} y \texttt{ex\_stalls} son dos fuentes estructurales diferentes de parada global.
+
+A continuación se detalla la lógica de activación para cada contador:
+
+\begin{itemize}
+    \item \textbf{Instrucciones (\texttt{inc\_I}):} Se incrementa en cada ciclo donde una instrucción válida alcanza la etapa de \textit{Write-Back} y no hay una parada global del sistema (\texttt{valid\_I\_WB and not(stall\_MIPS)}).
+    \item \textbf{Riesgos de Datos (\texttt{inc\_data\_stalls}):} Se activa cuando la Unidad de Detención detecta una dependencia (\texttt{stall\_ID}), siempre y cuando no exista una parada de mayor prioridad provocada por la memoria o la ALU (\texttt{not(stall\_MIPS)}).
+    \item \textbf{Riesgos de Control (\texttt{inc\_control\_stalls}):} Se incrementa un ciclo por cada salto tomado que fuerza la anulación de la instrucción en \textit{Fetch} (\texttt{Kill\_IF}), evitando duplicidad si el procesador ya estaba detenido por otras causas.
+    \item \textbf{Excepciones (\texttt{inc\_Exceptions}):} Contabiliza el número total de veces que el \\\texttt{Exception\_manager} activa la señal \texttt{Exception\_accepted}.
+    \item \textbf{Paradas de Memoria (\texttt{inc\_Mem\_stalls}):} Tiene la prioridad más alta. Se incrementa siempre que el procesador esté detenido globalmente y la causa sea que el subsistema de memoria no está listo (\texttt{stall\_MIPS and not(IO\_MEM\_ready)}).
+    \item \textbf{Paradas de ALU/Estructurales (\texttt{inc\_EX\_stalls}):} Contabiliza los ciclos en los que la ALU multiciclo está operando (\texttt{not(ALU\_ready)}) y la memoria sí está disponible, aislando así el coste de la unidad MAC.
+\end{itemize}
+
+\subsection{Verificación en simulación}
+La comprobación de RF9 no necesita un único programa de prueba, sino varios escenarios representativos donde cada contador tenga una interpretación clara. Para ello se han reutilizado tests ya empleados en requisitos anteriores:
+\begin{itemize}
+    \item \texttt{./ejecutar\_mips.sh test\_jump}, para observar la evolución de \texttt{ins} y \texttt{control\_stalls}.
+    \item \texttt{./ejecutar\_mips.sh test\_lw}, para observar \texttt{data\_stalls} en un caso \textit{load-use}.
+    \item \texttt{./ejecutar\_mips.sh mac\_beq}, para validar \texttt{ex\_stalls} y la convivencia entre paradas estructurales y de control.
+\end{itemize}
+
+Se ha verificado mediante simulación que los valores de los contadores coinciden con el comportamiento observado en los cronogramas:
+
+\begin{itemize}
+    \item \textbf{Instrucciones:} El contador \texttt{Ins} refleja fielmente el número de instrucciones que completan el ciclo de vida en el \textit{pipeline}, ignorando las burbujas insertadas por saltos o riesgos de datos.
+    \item \textbf{Stalls:} En secuencias de tipo \textit{Load-Use}, el contador \texttt{data\_stalls} incrementa exactamente un ciclo. En saltos condicionales tomados, el contador \texttt{control\_stalls} registra el ciclo de penalización por el \textit{flush} de la etapa IF.
+    \item \textbf{Jerarquía:} Se ha comprobado que si el procesador está detenido globalmente por una causa estructural, no se contabilizan simultáneamente paradas de datos o de control en ese mismo ciclo.
+\end{itemize}
 
 \subsubsection*{Verificación}
-En la plantilla nueva se citan ejemplos del banco de pruebas \codigo{test\_IRQ}, como:
-\begin{itemize}[leftmargin=1.2cm]
-    \item de \codigo{LW R1, 8(R0)} a \codigo{ADD R31, R1, R31}: anticipación de \codigo{rs} a distancia 2,
-    \item de \codigo{SUB R31, R31, R1} a \codigo{LW R1, 0(R31)}: anticipación de \codigo{rs} a distancia 1,
-    \item de \codigo{ADD R2, R1, R2} a \codigo{SW R2, 7008(R6)}.
+La validación se ha repartido entre tres programas de prueba: \texttt{./ejecutar\_mips.sh test\_jump}, que carga \texttt{RAM\_UD\_test\_jump.vhd} sobre \texttt{RAM\_D\_default.vhd}; \texttt{./ejecutar\_mips.sh test\_lw}, que carga \texttt{RAM\_UD\_test\_lw.vhd}; y \texttt{./ejecutar\_mips.sh mac\_beq}, que selecciona \texttt{RAM\_MAC\_BEQ.vhd}. Con ellos se documentan respectivamente el comportamiento de \texttt{ins}/\texttt{control\_stalls}, de \texttt{data\_stalls} y de \texttt{ex\_stalls}.
+
+\subsubsection*{Caso 1: Contadores de flujo y control}
+El test \texttt{test\_jump} permite comprobar que el contador dinámico de instrucciones sigue aumentando únicamente cuando las instrucciones válidas alcanzan WB, mientras que \texttt{control\_stalls} refleja los ciclos en los que \texttt{Kill\_IF} invalida la instrucción especulativa tras un salto tomado.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf9_control_counters.png}
+    \caption{Test \texttt{test\_jump}. Evolución conjunta de \texttt{ins} y \texttt{control\_stalls} ante saltos tomados.}
+    \label{fig:rf9_control_counters}
+\end{figure}
+
+Esta captura muestra el comportamiento del contador de penalizaciones por control. En el instante señalado, la instrucción de salto se toma correctamente (\texttt{salto\_tomado = 1}) y la lógica de control invalida la instrucción especulativa en \textit{fetch} mediante \texttt{kill\_if = 1}. Como consecuencia, la señal \texttt{inc\_control\_stalls = 1} provoca el incremento del contador \texttt{control\_stalls}. Al mismo tiempo, el contador dinámico de instrucciones (\texttt{ins}) continúa su evolución de forma independiente, reflejando únicamente las instrucciones válidas que completan su ejecución.
+
+
+\subsubsection*{Caso 2: Contador de paradas de datos}
+El test \texttt{test\_lw} aísla el caso clásico de dependencia \textit{load-use}. En él se espera que \texttt{data\_stalls} incremente exactamente durante el ciclo en que \texttt{stall\_ID} retiene la instrucción consumidora y se inserta la burbuja correspondiente hacia EX.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf9_data_counters.png}
+    \caption{Test \texttt{test\_lw}. Incremento de \texttt{data\_stalls} asociado al riesgo \textit{load-use}.}
+    \label{fig:rf9_data_counters}
+\end{figure}
+
+Esta captura valida el contador de paradas por riesgos de datos. En el tramo mostrado, el contador \texttt{data\_stalls} ya ha incrementado hasta \texttt{1}, reflejando la parada introducida previamente por una dependencia de tipo \textit{load-use}. Además, la presencia de \texttt{valid\_i\_ex = 0} muestra la inserción de una burbuja en la etapa EX, consecuencia directa de la detención del cauce. La simulación confirma así que el procesador no solo resuelve el riesgo correctamente, sino que también lo contabiliza de forma precisa en el contador de rendimiento correspondiente.
+
+
+\subsubsection*{Caso 3: Contador de paradas estructurales}
+El test \texttt{mac\_beq} resulta especialmente útil porque combina una operación MAC multiciclo con un salto posterior. De este modo puede verificarse que:
+\begin{itemize}
+    \item los ciclos en los que la ALU mantiene \texttt{ALU\_ready = 0} se reflejan en \texttt{ex\_stalls},
+    \item el salto tomado posterior incrementa \texttt{control\_stalls},
+    \item y ambas penalizaciones no se cuentan simultáneamente dentro del mismo ciclo.
 \end{itemize}
 
-\paragraph{Código ensamblador representativo}
-\begin{lstlisting}
-# Pegar aquí casos representativos de forwarding
-\end{lstlisting}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf9_ex_counters.png}
+    \caption{Test \texttt{mac\_beq}. Separación entre \texttt{ex\_stalls} estructurales y \texttt{control\_stalls} debidos al salto.}
+    \label{fig:rf9_ex_counters}
+\end{figure}
 
-\paragraph{Comentario del test}
-Completar con otros casos representativos y explicar por qué el valor correcto llega sin parada cuando procede.
+Esta captura muestra la separación entre paradas estructurales y penalizaciones de control en el test \texttt{mac\_beq}. En el instante señalado, el procesador continúa detenido globalmente (\texttt{stall\_mips = 1}) debido a la operación MAC multiciclo, por lo que se activa \texttt{inc\_ex\_stalls = 1} y el contador \texttt{ex\_stalls} sigue aumentando. Al mismo tiempo, \texttt{control\_stalls} conserva el valor acumulado asociado al salto posterior, sin incrementarse de nuevo en ese ciclo. La simulación confirma así que el diseño distingue correctamente entre penalizaciones estructurales y de control, evitando contabilizar dos veces una misma parada.
 
-\vspace{0.3cm}
-\noindent\pendiente
 
-% -------------------------------------------------
-\subsection{RF3 -- Riesgos de datos}
-% -------------------------------------------------
+\subsubsection*{Caso 4: Test sintético para estimar el CPI}
 
-\subsubsection*{Descripción}
-El procesador es capaz de detener la ejecución para evitar los riesgos causados por dependencias en instrucciones \codigo{lw}-uso
-(distancia 1), \codigo{beq} o WRO (distancias 1 o 2).
+Además de los tests anteriores, se ha diseñado un banco de pruebas específico denominado \texttt{test\_cpi}, ejecutado mediante \texttt{./ejecutar\_mips.sh test\_cpi}. Este test carga la ROM de instrucciones \texttt{RAM\_UD\_test\_cpi.vhd} sobre la RAM de datos \texttt{RAM\_D\_default.vhd} y ejecuta un bucle pequeño y repetitivo diseñado para provocar de forma controlada tres tipos de penalización del \textit{pipeline}: una parada por dependencia de datos, varias paradas estructurales debidas a la ALU multiciclo y una penalización de control por salto tomado.
 
-\subsubsection*{¿Cómo?}
-Explicar brevemente la gestión de detenciones:
-\begin{itemize}[leftmargin=1.2cm]
-    \item señales usadas por la unidad de detección,
-    \item instrucciones que obligan a detener,
-    \item detención de IF/ID,
-    \item invalidación hacia EX.
-\end{itemize}
+El cuerpo del bucle combina una instrucción \texttt{LW} seguida de una instrucción consumidora inmediata, una operación \texttt{MAC\_INI} y un salto \texttt{BEQ} tomado. De este modo, cada iteración reproduce un patrón fácilmente interpretable y permite observar con claridad la evolución de los contadores \texttt{ins}, \texttt{data\_stalls}, \texttt{control\_stalls}, \texttt{ex\_stalls} y \texttt{mem\_stalls}.
 
-\vspace{0.3cm}
-\noindent\pendiente
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf9_cpi_test.png}
+    \caption{Test \texttt{test\_cpi}. Evolución de los contadores de rendimiento en un bucle sintético diseñado para estimar el CPI.}
+    \label{fig:rf9_cpi_test}
+\end{figure}
 
-\subsubsection*{Verificación}
-En la plantilla nueva se citan estos casos en \codigo{test\_IRQ}:
-\begin{itemize}[leftmargin=1.2cm]
-    \item \textbf{Test 1:} 1 ciclo de detención por dependencia a distancia 2 entre \codigo{ADD R1, R1, R1} y \codigo{beq R1, R1, main},
-    \item \textbf{Test 2:} 1 ciclo de detención por dependencia \codigo{lw}-uso, por ejemplo entre \codigo{LW R1, 8(R0)} y \codigo{SW R1, 7004(R6)},
-    \item \textbf{Test 3:} no se para entre \codigo{SW R1, 7004(R6)} y \codigo{ADD R1, R1, R1}.
-\end{itemize}
+En una captura representativa del test \texttt{test\_cpi} se observa el estado \texttt{ins = 34}, \texttt{cycles = 78}, \texttt{data\_stalls = 8}, \texttt{control\_stalls = 9}, \texttt{ex\_stalls = 24} y \texttt{mem\_stalls = 0}. A partir de estos valores puede estimarse el rendimiento real del procesador en este escenario mediante la expresión:
 
-\paragraph{Código ensamblador representativo}
-\begin{lstlisting}
-# Pegar aquí pruebas de riesgos de datos
-\end{lstlisting}
-
-\paragraph{Comentario del test}
-Completar con otros casos representativos e indicar cuántos ciclos de parada aparecen y por qué.
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-% -------------------------------------------------
-\subsection{RF4 -- Riesgos de control}
-% -------------------------------------------------
-
-\subsubsection*{Descripción}
-El procesador es capaz de eliminar los riesgos de control causados por las instrucciones de salto: \codigo{beq} y \codigo{rte}.
-
-\subsubsection*{¿Cómo?}
-Explicar brevemente:
-\begin{itemize}[leftmargin=1.2cm]
-    \item cómo se gestiona el PC,
-    \item cuándo se anulan instrucciones,
-    \item qué señales de control intervienen.
-\end{itemize}
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-\subsubsection*{Verificación}
-En el banco de pruebas \codigo{test\_IRQ} se verifican varios saltos tomados en los que sólo se ejecutan las instrucciones correctas:
-\begin{itemize}[leftmargin=1.2cm]
-    \item \codigo{beq R1, R1, main},
-    \item \codigo{rte},
-    \item un ejemplo en el que no se salta,
-    \item verificar también \codigo{jal} y \codigo{ret}.
-\end{itemize}
-
-\paragraph{Código ensamblador representativo}
-\begin{lstlisting}
-# Pegar aquí pruebas de riesgos de control
-\end{lstlisting}
-
-\paragraph{Comentario del test}
-Indicar qué instrucciones se anulan y cuáles llegan a ejecutarse realmente.
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-% -------------------------------------------------
-\subsection{RF5 -- Riesgos estructurales}
-% -------------------------------------------------
-
-\subsubsection*{Descripción}
-El procesador es capaz de detener la ejecución para evitar riesgos estructurales causados por las instrucciones \codigo{mac} y \codigo{mac\_ini}.
-
-\subsubsection*{¿Cómo?}
-Explicar brevemente la gestión de riesgos estructurales:
-\begin{itemize}[leftmargin=1.2cm]
-    \item qué etapas se detienen,
-    \item qué señal de control se emplea,
-    \item cómo se coordina con el resto de detenciones.
-\end{itemize}
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-\subsubsection*{Verificación}
-En el banco de pruebas \codigo{testbench\_2} se ejecutan varias instrucciones \codigo{mac} y \codigo{mac\_ini}, incluyendo:
-\begin{itemize}[leftmargin=1.2cm]
-    \item \codigo{mac\_ini R10, R1, R5},
-    \item \codigo{mac R10, R2, R6}.
-\end{itemize}
-
-\paragraph{Código ensamblador representativo}
-\begin{lstlisting}
-# Pegar aquí test de riesgos estructurales con MAC / MAC_ini
-\end{lstlisting}
-
-\paragraph{Comentario del test}
-Explicar la detención estructural y el resultado final.
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-% -------------------------------------------------
-\subsection{RF6 -- Cambio a modo excepción}
-% -------------------------------------------------
-
-\subsubsection*{Descripción}
-Si el procesador está en modo usuario y recibe \codigo{IRQ}, \codigo{ABORT} o \codigo{UNDEF}, pasa al modo correspondiente y ejecuta la rutina que indica la tabla de vectores de excepción.
-Si está en modo excepción, ignora nuevas señales hasta volver a modo usuario.
-
-\subsubsection*{¿Cómo?}
-Explicar brevemente la gestión del PC al aceptar la excepción:
-\begin{itemize}[leftmargin=1.2cm]
-    \item detección de \codigo{IRQ}, \codigo{ABORT} y \codigo{UNDEF},
-    \item selección de rutina,
-    \item actualización de PC,
-    \item cambio de modo.
-\end{itemize}
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-\subsubsection*{Verificación}
-
-\paragraph{IRQ}
-Banco de pruebas \codigo{test\_IRQ} con diversas IRQs. Se atienden si y sólo si el procesador está en modo usuario.
-
-\begin{lstlisting}
-# Pegar aquí test de IRQ
-\end{lstlisting}
-
-\paragraph{Data Abort}
-En la memoria de instrucciones se incluyen pruebas con:
-\begin{itemize}[leftmargin=1.2cm]
-    \item acceso no alineado,
-    \item acceso a dirección fuera de rango.
-\end{itemize}
-En ambos casos la ejecución salta a la rutina Data Abort.
-
-\begin{lstlisting}
-# Pegar aquí test de Data Abort
-\end{lstlisting}
-
-\paragraph{Undef}
-Se ejecuta una instrucción con código de operación desconocido y la ejecución salta a la rutina UNDEF.
-
-\begin{lstlisting}
-# Pegar aquí test de instrucción indefinida
-\end{lstlisting}
-
-\paragraph{Comentario del test}
-Explicar cómo se observa en simulación la entrada al modo excepción y la rutina ejecutada.
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-% -------------------------------------------------
-\subsection{RF7 -- Retorno a modo usuario con RTE}
-% -------------------------------------------------
-
-\subsubsection*{Descripción}
-Al terminar la excepción se vuelve a la ejecución original con la instrucción \codigo{rte}.
-
-\subsubsection*{¿Cómo?}
-Explicar brevemente:
-\begin{itemize}[leftmargin=1.2cm]
-    \item cómo se restaura el PC,
-    \item cómo se vuelve a modo usuario,
-    \item cómo se conserva el contexto,
-    \item cómo se usa el esquema de prólogo/epílogo.
-\end{itemize}
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-\subsubsection*{Verificación}
-Sólo es necesario verificarlo para las IRQs. El código debe funcionar aunque se interrumpa repetidas veces.
-En \codigo{test\_IRQ} se comprueba que se retorna a la ejecución sin alterarla siempre que se guarden y restauren registros en pila, usando \codigo{R31} como SP.
-
-\begin{lstlisting}
-# Pegar aquí test de retorno con rte
-\end{lstlisting}
-
-\paragraph{Comentario del test}
-Describir cómo se comprueba que el programa continúa correctamente tras la interrupción.
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-% -------------------------------------------------
-\subsection{RF8 -- ALU multiciclo}
-% -------------------------------------------------
-
-\subsubsection*{Descripción}
-El procesador es capaz de ejecutar las instrucciones \codigo{mac} y \codigo{mac\_ini} en 3 ciclos y gestionar el estado del registro \codigo{ACC} ante el tratamiento de excepciones.
-
-\subsubsection*{¿Cómo?}
-Explicar brevemente la máquina de estados diseñada:
-\begin{itemize}[leftmargin=1.2cm]
-    \item estados,
-    \item entradas y salidas de cada estado,
-    \item número de ciclos,
-    \item gestión hardware o software del registro \codigo{ACC} al tratar excepciones.
-\end{itemize}
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-\subsubsection*{Verificación}
-El banco de pruebas \codigo{testbench\_2} incluye varias instrucciones \codigo{mac} y \codigo{mac\_ini}.
-
-Además, conviene diseñar un banco de pruebas donde tanto la función principal como la RTI empleen instrucciones MAC y verificar el estado del registro \codigo{ACC}.
-
-\begin{lstlisting}
-# Pegar aquí test de ALU multiciclo / MAC
-\end{lstlisting}
-
-\paragraph{Comentario del test}
-Explicar el funcionamiento en 3 ciclos y el tratamiento del registro \codigo{ACC}.
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-% -------------------------------------------------
-\subsection{RF9 -- Contadores}
-% -------------------------------------------------
-
-\subsubsection*{Descripción}
-Los contadores dan información de la ejecución del código.
-
-\subsubsection*{¿Cómo?}
-Explicar brevemente la gestión de los contadores:
-\begin{itemize}[leftmargin=1.2cm]
-    \item cuándo incrementa cada contador,
-    \item qué señales los habilitan,
-    \item cómo se evita contar una parada varias veces,
-    \item jerarquía entre causas de parada.
-\end{itemize}
-
-\vspace{0.3cm}
-\noindent\pendiente
-
-\subsubsection*{Verificación}
-En el banco de pruebas \codigo{test\_IRQ} se ha comprobado que:
-\begin{itemize}[leftmargin=1.2cm]
-    \item \codigo{Ins} incrementa por cada instrucción válida que hace WB,
-    \item \codigo{Data\_stalls} contabiliza los ciclos debidos a riesgos de datos,
-    \item \codigo{Control\_stalls} incrementa un ciclo por salto tomado,
-    \item \codigo{Exception\_accepted} contabiliza las excepciones aceptadas,
-    \item \codigo{Memory\_stalls} incrementa cuando memoria no está \codigo{ready}.
-\end{itemize}
-
-\paragraph{Jerarquía de paradas}
-Importante: las paradas deben incrementar sólo un contador.
-Si hay varios motivos, se cuenta el de mayor jerarquía:
 \[
-\texttt{memory stall} > \texttt{data stall} > \texttt{control stall}
+CPI = \frac{\texttt{cycles}}{\texttt{ins}} = \frac{78}{34} \approx 2.29
 \]
 
-\begin{lstlisting}
-# Pegar aquí programa o test para verificar contadores
-\end{lstlisting}
+Este resultado es coherente con la estructura del test, ya que el bucle provoca de forma repetida una parada por dependencia de datos, varias paradas estructurales debidas a la ALU multiciclo y una penalización adicional por control en cada iteración. Además, el hecho de que \texttt{mem\_stalls = 0} confirma que la penalización observada proviene exclusivamente de la gestión interna del cauce y no de la memoria.
 
-\paragraph{Comentario del test}
-Explicar la relación entre el comportamiento observado y los valores leídos en los contadores.
 
-\vspace{0.3cm}
-\noindent\pendiente
+\paragraph{Conclusiones}
+El requisito RF9 queda satisfecho si los contadores reflejan de forma consistente la dinámica real del \textit{pipeline}: instrucciones completadas, paradas por dependencias, penalizaciones de control y bloqueos estructurales. Las simulaciones seleccionadas permiten comprobar no solo que cada contador aumenta cuando corresponde, sino también que el diseño evita el doble cómputo de un mismo ciclo de parada bajo categorías incompatibles.
+
+
+\newpage
+
 
 % -------------------------------------------------
 \section{Cuantificación de horas dedicadas}
 % -------------------------------------------------
 
-Indicar horas por tarea (y persona en el caso de parejas).
-
-\begin{center}
-\begin{tabular}{p{9cm}c}
+\begin{table}[H]
+\centering
+\begin{tabular}{lccc}
 \toprule
-\textbf{Tarea} & \textbf{Horas} \\
+\textbf{Tarea} & \textbf{Pablo} & \textbf{Tahir} & \textbf{Total} \\
 \midrule
-Estudio del MIPS, VHDL, entorno, instalación\ldots & \pendiente \\
-Adición de las nuevas instrucciones & \pendiente \\
-Gestión de excepciones & \pendiente \\
-Gestión de riesgos & \pendiente \\
-Depuración, verificación y programas de prueba & \pendiente \\
-Memoria & \pendiente \\
+Estudio del MIPS, VHDL, entorno, instalación\ldots & 6  & 4  & 10 \\
+Adición de las nuevas instrucciones                & 4  & 2  & 6  \\
+Gestión de excepciones                             & 5  & 3  & 8  \\
+Gestión de riesgos                                 & 5  & 3  & 8  \\
+Depuración, verificación y programas de prueba     & 10 & 14 & 24 \\
+Memoria                                            & 8  & 12 & 18 \\
 \midrule
-\textbf{Total} & \pendiente \\
+\textbf{Total acumulado}                           & \textbf{38} & \textbf{38} & \textbf{76} \\
 \bottomrule
 \end{tabular}
-\end{center}
-
+\caption{Desglose detallado de las horas dedicadas al Proyecto 1.}
+\label{tab:horas_final}
+\end{table}
 % -------------------------------------------------
 \section{Conclusiones y autoevaluación}
 % -------------------------------------------------

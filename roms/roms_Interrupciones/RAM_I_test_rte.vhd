@@ -57,8 +57,8 @@ architecture Behavioral of memoriaRAM_I is
         3 => X"1000FFFF", -- Word 3: Bucle error
         
         -- .CODE PRINCIPAL (@010 / Word 4)
-        4 => X"20020001", -- ADDI R2, R0, 1  -> R2 = 1 (Nuestro sumando fijo)
-        5 => X"20010000", -- ADDI R1, R0, 0  -> R1 = 0 (Nuestro acumulador)
+        4 => X"08020004", -- LW R2, 4(R0)    -> R2 = 1 (Sumando cargado de memoria)
+        5 => X"00000000", -- NOP             -> R1 ya inicializa a 0
         
         -- BUCLE DE SUMAS (Aquí es donde queremos que caiga la IRQ)
         6 => X"00220820", -- ADD R1, R1, R2  -> R1 = R1 + R2 (Instrucción ADD pura)

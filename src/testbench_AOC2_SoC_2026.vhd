@@ -52,21 +52,21 @@
 		-- If IRQ are not wanted comment  this part
 		-- IRQs are generated after the indicated cycles with EXT_int
 		-- EXT_int is manteined at '1' until ACK is received
-		EXT_IRQ <= '1';
-		if INT_ACK = '0' then 
-			wait until INT_ACK ='1'; 
-	  	end if;
-		EXT_IRQ <= '0';
-		wait for CLK_period*50;
-		EXT_IRQ <= '1';
-		EXT_IRQ <= '1';
-		if INT_ACK = '0' then 
-			wait until INT_ACK ='1'; 
-	  	end if;
-	  	EXT_IRQ <= '0';
-		wait for CLK_period*50;
+	--	EXT_IRQ <= '1';
+	--	if INT_ACK = '0' then 
+	--		wait until INT_ACK ='1'; 
+	--  	end if;
+	--	EXT_IRQ <= '0';
+		--wait for CLK_period*50;
+		--EXT_IRQ <= '1';
+		--EXT_IRQ <= '1';
+		--if INT_ACK = '0' then 
+			--wait until INT_ACK ='1'; 
+	  	--end if;
+	  	--EXT_IRQ <= '0';
+		--wait for CLK_period*50;
 		-- Ahora interrumpimos sin parar
-		EXT_IRQ <= '1';
+		--EXT_IRQ <= '1';
 		-- END interruptions test
 		wait;
    end process;

@@ -56,8 +56,8 @@ architecture Behavioral of memoriaRAM_I is
 signal RAM : RamType := (
         -- [0] PC=0: JAL R7, 1 
         -- Cálculo: PC4(4) + (1*4) = 8. Salta a la posición 2 de la RAM.
-        -- Opcode=000101 (5), R7=00111 (7) -> X"14E00001"
-        0  => X"14E00001", 
+        -- Opcode=000101 (5), rd=00111 (7) -> X"14003801"
+        0  => X"14003801", 
         
         -- [1] PC=4: ADD R10, R7, R0 
         -- Esta instrucción será "killeada" por el salto.
