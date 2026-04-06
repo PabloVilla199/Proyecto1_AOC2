@@ -1,3 +1,13 @@
+------------------------------------------------------------------------------------
+-- Company: Univesidad de Zaragoza
+-- Engineer: Tahir Berga, Pablo Villa.
+-- Desxription: Unidad de Detención (Stalling Unit) para el proyecto de MIPS segmentado.
+-- Esta unidad detecta situaciones en las que la ejecución de una instrucción debe ser detenida
+-- para evitar errores de datos o control. Maneja casos como Load-Use, saltos tomados, y operaciones
+-- de la ALU que requieren varios ciclos (MAC).
+-- Unversidad de Zaragoza - Arquitectura de Computadores 2  2025-2026
+-----------------------------------------------------------------------------------
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 

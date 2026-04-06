@@ -1,4 +1,6 @@
 ----------------------------------------------------------------------------------
+-- Company: Univesidad de Zaragoza
+-- Engineer: Tahir Berga, Pablo Villa.
 -- Description: Segmented Mips as we have studied it in class with:
 -- Anticipation unit (incomplete)
 -- Stopping unit (incomplete)

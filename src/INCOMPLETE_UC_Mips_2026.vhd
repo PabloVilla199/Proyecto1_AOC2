@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
+-- Company: Univesidad de Zaragoza
+-- Engineer: Tahir Berga, Pablo Villa.
 -- 
 -- Create Date:    13:14:28 04/07/2014 
 -- Design Name: 

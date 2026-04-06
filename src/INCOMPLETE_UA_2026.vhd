@@ -1,3 +1,10 @@
+-----------------------------------------------------------------------------------
+-- Author: Tahir Berga, Pablo Villa.
+-- Description: Unidad de Anticipación (Forwarding Unit) para el proyecto de MIPS segmentado.
+-- Esta unidad detecta dependencias de datos entre instrucciones en ejecución y activa el forwarding
+-- para evitar stalls cuando es posible. También maneja el caso especial de JAL a distancia 2.
+-- Unversidad de Zaragoza - Arquitectura de Computadores 2  2025-2026
+--
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
