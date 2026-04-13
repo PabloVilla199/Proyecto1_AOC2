@@ -31,7 +31,7 @@ end ALU_Vector_MAC;
 
 architecture Behavioral of ALU_Vector_MAC is
 
-    type state_type is (IDLE, PROD, SUM, ACC);
+    type state_type is (IDLE, PROD, SUM);--Modificado
     signal state, next_state: state_type := IDLE;
 
     -- Registros intermedios para multiciclo
@@ -41,6 +41,7 @@ architecture Behavioral of ALU_Vector_MAC is
 
     signal ready_int: std_logic;
     signal mac_op, mac_ini_op, is_mac: std_logic;
+    signal mac_result_comb: signed(31 downto 0); --Modificado
 
 begin
 
@@ -50,13 +51,14 @@ begin
     is_mac     <= (mac_op or mac_ini_op) and valid_I_EX;
 
     -- Máquina de estados 
-    process(clk, reset)
+    process(clk)--Modificado
     begin
-        if reset = '1' then
-            state <= IDLE;
-            ACC_reg <= (others => '0');
-        elsif rising_edge(clk) then
-            if valid_I_EX = '0' then
+
+        if rising_edge(clk) then
+            if reset = '1' then--Modificado
+                state <= IDLE;
+                ACC_reg <= (others => '0');
+            elsif valid_I_EX = '0' then
                 state <= IDLE;
             else
                 state <= next_state;
@@ -78,12 +80,8 @@ begin
                     sum2_reg <= (prod2_reg(15) & prod2_reg) + (prod3_reg(15) & prod3_reg);
 
                 when SUM =>
-                    -- Ciclo 3: Suma final y actualización del acumulador (ACC)
-                    if mac_ini_op = '1' then
-                        ACC_reg <= resize((sum1_reg(16) & sum1_reg) + (sum2_reg(16) & sum2_reg), 32);
-                    else
-                        ACC_reg <= ACC_reg + resize((sum1_reg(16) & sum1_reg) + (sum2_reg(16) & sum2_reg), 32);
-                    end if;
+                    -- Ciclo 3: Registrar resultado combinacional en ACC_reg para futuras acumulaciones
+                    ACC_reg <= mac_result_comb;
 
                 when others => null;
             end case;
@@ -100,9 +98,7 @@ begin
             when PROD =>
                 next_state <= SUM;
             when SUM =>
-                next_state <= ACC;
-            when ACC =>
-                next_state <= IDLE;
+                next_state <= IDLE;--Modificado
             when others =>
                 next_state <= IDLE;
         end case;
@@ -111,15 +107,20 @@ begin
     -- Señal READY para la Unidad de Detención (UD)
     -- Se mantiene a '0' durante los estados de cálculo (PROD, SUM)
     -- Vuelve a '1' en ACC porque el dato en ACC_reg ya es válido en este ciclo.
-    ready_int <= '0' when (is_mac = '1' and (state = IDLE or state = PROD or state = SUM)) else '1';
+    ready_int <= '0' when (is_mac = '1' and (state = IDLE or state = PROD)) else '1';--Modificado
     ready <= ready_int;
 
+    mac_result_comb <= resize((sum1_reg(16) & sum1_reg) + (sum2_reg(16) & sum2_reg), 32)
+                       when mac_ini_op = '1' else
+                       ACC_reg + resize((sum1_reg(16) & sum1_reg) + (sum2_reg(16) & sum2_reg), 32);
+
     -- Salida de la ALU
-    Dout <= DA + DB when (ALUctrl = "000") else
-            DA - DB when (ALUctrl = "001") else
+    Dout <= std_logic_vector(mac_result_comb) when (is_mac = '1' and state = SUM) else
+            std_logic_vector(ACC_reg)          when (mac_op = '1' or mac_ini_op = '1') else
+            DA + DB   when (ALUctrl = "000") else
+            DA - DB   when (ALUctrl = "001") else
             DA AND DB when (ALUctrl = "010") else
-            DA OR DB when (ALUctrl = "011") else
-            std_logic_vector(ACC_reg) when (mac_op = '1' or mac_ini_op = '1') else
+            DA OR DB  when (ALUctrl = "011") else
             (others => '0');
 
 end Behavioral;

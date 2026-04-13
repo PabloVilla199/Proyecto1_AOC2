@@ -4,7 +4,7 @@ set -euo pipefail
 
 TEST_NAME="${1:-}"
 VIEW_WAVEFORM=""
-STOP_TIME="5000ns"
+STOP_TIME="50000ns"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -71,11 +71,13 @@ show_menu() {
             echo "  1) Delayed System       (Basico)"
             echo "  2) Delayed MAC          (Multiplicacion MC)"
             echo "  3) Not delayed system      (Basico sin delay slot)"
+            echo "  4) Test subsanacion     (Basico sin delay slot)"
             read -r -p "Opcion: " sub_opcion
             case "$sub_opcion" in
                 1) TEST_NAME="delayed_system" ;;
                 2) TEST_NAME="delayed_mac" ;;
                 3) TEST_NAME="not_delayed_system" ;;
+                4) TEST_NAME="test_subsanacion" ;;
                 *) TEST_NAME="" ;;
             esac
             ;;
@@ -197,6 +199,7 @@ normalize_test_name() {
         test_mac_beq|mac_beq) echo "mac_beq" ;;
         test_jal_nested|jal_nested) echo "test_jal_nested" ;;
         mac_overflow|overflow) echo "mac_overflow" ;;
+        test_subsanacion|subsanacion) echo "test_subsanacion" ;;
         all|todos) echo "all" ;;
         *) echo "" ;;
     esac
@@ -229,7 +232,7 @@ ram_i_file_for_test() {
         test_forwarding_store|forwarding_store) echo "${ROMS_DIR}/roms_UA/RAM_UA_fwd_store.vhd" ;;
         test_jal_nested) echo "${ROMS_DIR}/room_jal_ret/RAM_JAL_NESTED.vhd" ;;
         mac_overflow) echo "${ROMS_DIR}/room_MAC/RAM_MAC_OVERFLOW.vhd" ;;
-
+        test_subsanacion) echo "${ROMS_DIR}/room_jal_ret/RAM_I_test_subsanacion.vhd" ;;
         *) echo "" ;;
     esac
 }
@@ -238,6 +241,7 @@ data_ram_file_for_test() {
     case "$1" in
         delayed_system|not_delayed_system|delayed_mac|test_jal|test_ret|test_jal_nested|test_beq|test_jump|test_lw|test_jal_if|test_jal_ud|test_cpi|test_forwarding|test_forwarding_prioridad|test_forwarding_jal|mac_multiciclo|mac_raw|mac_beq|mac_overflow|test_forwarding_store) echo "${RAM_DATA_DIR}/RAM_D_default.vhd" ;;
         irq|data_abort_unaligned|data_abort_oob|undef|test_rte) echo "${RAM_DATA_DIR}/RAM_D_irq.vhd" ;;
+        test_subsanacion) echo "${RAM_DATA_DIR}/RAM_128_32_P1_tests_subsanacion.vhd" ;;
         *) echo "" ;;
     esac
 }
@@ -376,6 +380,7 @@ if [ "$TEST_NAME_NORMALIZED" = "all" ]; then
     run_test_flow "test_jal_nested"
     run_test_flow "test_forwarding_store"
     run_test_flow "not_delayed_system"
+    run_test_flow "test_subsanacion"
 else
     run_test_flow "$TEST_NAME_NORMALIZED"
 fi

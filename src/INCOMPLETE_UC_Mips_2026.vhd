@@ -90,7 +90,7 @@ begin
 			-- COMPLETE
 			------------------------------------------------
 			-- JAL: salto con enlace (la escritura de PC4 se decide despues en WB)
-			WHEN  jal_opcode  	=>  jal <= '1'; RegWrite <= '1'; MemtoReg <= '1'; RegDst <= '1';
+			WHEN  jal_opcode  	=>  jal <= '1'; RegWrite <= '1'; MemtoReg <= '1'; --Modificado
 			-- RET: salto a la direccion contenida en Rs (no escribe en BR)
 			WHEN  RET_opcode  	=>  ret <= '1';
 			-- RTE: retorno de excepcion usando Exception_LR (no escribe en BR)
